@@ -14,32 +14,33 @@ import { useDashboardNav } from "@/contexts/dashboard-nav";
 import { useAuthOptional } from "@/contexts/auth-context";
 import { useRouter } from "next/navigation";
 import { LanguageSwitcher } from "@/components/google-translate";
+import { SITE_TITLE } from "@/lib/site";
 
 const USER_BREADCRUMBS: Record<string, string[]> = {
-  overview: ["Northwind Inc.", "Workspace", "Overview"],
-  accounts: ["Northwind Inc.", "Banking", "Accounts"],
-  transactions: ["Northwind Inc.", "Activity", "Transactions"],
-  pay: ["Northwind Inc.", "Money movement", "Send & Pay"],
-  cards: ["Northwind Inc.", "Banking", "Cards"],
-  invest: ["Northwind Inc.", "Markets", "Investments"],
-  treasury: ["Northwind Inc.", "Markets", "Treasury"],
-  reports: ["Northwind Inc.", "Finance", "Reports"],
-  team: ["Northwind Inc.", "Workspace", "Team"],
-  integrations: ["Northwind Inc.", "Workspace", "Integrations"],
-  settings: ["Northwind Inc.", "Workspace", "Settings"],
+  overview:     [SITE_TITLE, "Workspace", "Overview"],
+  accounts:     [SITE_TITLE, "Banking",   "Accounts"],
+  transactions: [SITE_TITLE, "Activity",  "Transactions"],
+  pay:          [SITE_TITLE, "Money movement", "Send & Pay"],
+  cards:        [SITE_TITLE, "Banking",   "Cards"],
+  invest:       [SITE_TITLE, "Markets",   "Investments"],
+  treasury:     [SITE_TITLE, "Markets",   "Treasury"],
+  reports:      [SITE_TITLE, "Finance",   "Reports"],
+  team:         [SITE_TITLE, "Workspace", "Team"],
+  integrations: [SITE_TITLE, "Workspace", "Integrations"],
+  settings:     [SITE_TITLE, "Workspace", "Settings"],
 };
 
 const ADMIN_BREADCRUMBS: Record<string, string[]> = {
-  overview: ["Meridian", "Console", "Overview"],
-  users: ["Meridian", "Identity", "Users"],
-  orgs: ["Meridian", "Identity", "Organizations"],
-  transactions: ["Meridian", "Payments", "Transactions"],
-  compliance: ["Meridian", "Risk", "Compliance"],
-  risk: ["Meridian", "Risk", "Risk & Fraud"],
-  system: ["Meridian", "Infrastructure", "System Health"],
-  support: ["Meridian", "CX", "Support"],
-  audit: ["Meridian", "Security", "Audit Log"],
-  billing: ["Meridian", "Finance", "Billing"],
+  overview:     [SITE_TITLE, "Console",        "Overview"],
+  users:        [SITE_TITLE, "Identity",       "Users"],
+  orgs:         [SITE_TITLE, "Identity",       "Organizations"],
+  transactions: [SITE_TITLE, "Payments",       "Transactions"],
+  compliance:   [SITE_TITLE, "Risk",           "Compliance"],
+  risk:         [SITE_TITLE, "Risk",           "Risk & Fraud"],
+  system:       [SITE_TITLE, "Infrastructure", "System Health"],
+  support:      [SITE_TITLE, "CX",             "Support"],
+  audit:        [SITE_TITLE, "Security",       "Audit Log"],
+  billing:      [SITE_TITLE, "Finance",        "Billing"],
 };
 
 export function SiteHeader() {

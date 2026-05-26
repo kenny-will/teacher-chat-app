@@ -2,7 +2,7 @@
  * Base class for all Value Objects.
  * Value Objects are immutable; equality is structural (by value), not by reference.
  */
-export abstract class ValueObject<T extends Record<string, unknown>> {
+export abstract class ValueObject<T extends object> {
   protected constructor(protected readonly props: T) {
     Object.freeze(this)
     Object.freeze(this.props)

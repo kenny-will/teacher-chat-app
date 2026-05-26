@@ -25,7 +25,7 @@ import { SettingsPage } from "@/components/dashboard/settings";
 
 // ─── Admin pages ──────────────────────────────────────────────────────────────
 import { AdminOverviewPage } from "@/components/admin/overview";
-import { AdminUserPickerPage } from "@/components/admin/user-picker";
+import { AdminUsersPage } from "@/components/admin/users";
 import { AdminUserTransactionsPage } from "@/components/admin/admin-transactions-page";
 import { AdminDepositsPage } from "@/components/admin/admin-deposits";
 import { AdminWithdrawalsPage } from "@/components/admin/admin-withdrawals";
@@ -60,7 +60,7 @@ const USER_PAGES: Record<string, React.ComponentType> = {
 
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
   overview: AdminOverviewPage,
-  users: AdminUserPickerPage,
+  users: AdminUsersPage,
   accounts: AdminAccountsPage,
   transactions: AdminUserTransactionsPage,
   deposits: AdminDepositsPage,

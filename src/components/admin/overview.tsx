@@ -43,14 +43,14 @@ export function AdminOverviewPage() {
     refetch: refetchTxns,
   } = useServerData(() => adminGetAllTransactions(), []);
   const {
-    data: users,
+    data: rawUsers,
     isLoading: loadingUsers,
     refetch: refetchUsers,
   } = useServerData(() => adminGetUsers(), []);
 
   const isLoading = loadingTxns || loadingUsers;
   const allTxns = txns ?? [];
-  const allUsers = users ?? [];
+  const allUsers = rawUsers ?? [];
   const users = allUsers.filter((u) => u.role !== "admin");
   const deposits = allTxns.filter((t) => t.direction === "inbound");
   const withdrawals = allTxns.filter((t) => t.direction === "outbound");

@@ -502,14 +502,14 @@ function UserRow({
 // ─── Page ─────────────────────────────────────────────────────────
 
 export function AdminSimulatePage() {
-  const { data: users, isLoading } = useServerData(() => adminGetUsers(), []);
+  const { data: rawUsers, isLoading } = useServerData(() => adminGetUsers(), []);
   // activePanel: { userId, action } | null
   const [activePanel, setActivePanel] = useState<{
     userId: string;
     action: "deposit" | "withdrawal";
   } | null>(null);
 
-  const users = (users ?? []).filter((u) => u.role !== "admin");
+  const users = (rawUsers ?? []).filter((u) => u.role !== "admin");
 
   function handleAction(
     userId: string,
@@ -528,7 +528,7 @@ export function AdminSimulatePage() {
   }
 
   const activeUser = activePanel
-    ? ((users ?? []).find((u) => u.id === activePanel.userId) ?? null)
+    ? (users.find((u) => u.id === activePanel.userId) ?? null)
     : null;
 
   return (

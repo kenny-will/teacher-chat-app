@@ -799,13 +799,13 @@ function UserAccountRow({
 
 export function AdminAccountsPage() {
   const {
-    data: users,
+    data: rawUsers,
     isLoading,
     refetch,
   } = useServerData(() => adminGetUsers(), []);
   const { prices } = useCryptoPrices();
 
-  const users = (users ?? []).filter((u) => u.role !== "admin");
+  const users = (rawUsers ?? []).filter((u) => u.role !== "admin");
 
   return (
     <>

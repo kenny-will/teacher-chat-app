@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import Hero from "./hero"
 import Perks from "./perks"
 import { LanguageSwitcher } from "@/components/google-translate"
+import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/site"
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 function Navbar() {
@@ -18,7 +19,7 @@ function Navbar() {
             <div className="h-8 w-8 rounded-lg bg-[#2A5CFF] grid place-items-center">
               <span className="text-white font-bold text-[13px]">M</span>
             </div>
-            <span className="font-semibold text-[15px] tracking-tightish text-gray-900">Meridian</span>
+            <span className="font-semibold text-[15px] tracking-tightish text-gray-900">{SITE_TITLE}</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-[13.5px] text-gray-600">
             <a href="#features" className="hover:text-gray-900 transition">Product</a>
@@ -673,7 +674,7 @@ function Footer() {
               <div className="h-8 w-8 rounded-lg bg-[#2A5CFF] grid place-items-center">
                 <span className="text-white font-bold text-[13px]">M</span>
               </div>
-              <span className="font-semibold text-[15px] text-white">Meridian</span>
+              <span className="font-semibold text-[15px] text-white">{SITE_TITLE}</span>
             </div>
             <p className="text-[13px] text-white/40 max-w-[220px] leading-relaxed">
               Modern financial infrastructure for ambitious teams — accounts, payments, treasury, and compliance in one platform.
@@ -698,7 +699,7 @@ function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-white/8 flex items-center justify-between flex-wrap gap-4 text-[12.5px] text-white/30">
-          <span>© 2026 Meridian Financial Inc. · Member FDIC · FINRA / SIPC</span>
+          <span>© {new Date().getFullYear()} {SITE_TITLE} Financial Inc. · Member FDIC · FINRA / SIPC</span>
           <span>Regulated by FinCEN · MSB License #31000266090076</span>
         </div>
       </div>

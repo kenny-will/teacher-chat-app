@@ -33,8 +33,12 @@ export async function seedAnalytics(): Promise<void> {
   const totalRevenue = revenues.reduce((a, b) => a + b, 0)
   const prevTotalRevenue = Math.floor(totalRevenue / 1.201)
 
+  type MetricPeriod = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'yearly'
+  type MetricType = 'revenue' | 'users' | 'sessions' | 'conversions' | 'churn'
+  type MetricRow = { type: MetricType; period: MetricPeriod; value: string; previousValue: string; periodStart: Date; periodEnd: Date }
+
   // --- Monthly revenue metrics ---
-  const metricRows = MONTHS.map((_, i) => {
+  const metricRows: MetricRow[] = MONTHS.map((_, i) => {
     const periodStart = new Date(year, i, 1)
     const periodEnd = new Date(year, i + 1, 0, 23, 59, 59)
     const prevValue = Math.floor(revenues[i] / 1.15)
