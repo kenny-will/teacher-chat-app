@@ -20,6 +20,7 @@ import {
   queryBalanceOverview,
   queryAccounts,
   queryTransactions,
+  queryCards,
   queryOverviewSpendCategories,
   queryUpcomingPayments,
   queryActivityLogs,
@@ -71,39 +72,31 @@ const FALLBACK_BALANCE = {
   lastRebalancedAt: "2026-05-20",
 }
 
-const STATIC_DEPOSITS = [
-  { from: "Northwind Inc.",   method: "Wire", date: "Today, 09:14", amount: "+$142,500.00" },
-  { from: "Payroll return",   method: "ACH",  date: "Yesterday",    amount: "+$3,420.00"   },
-  { from: "Client retainer",  method: "Wire", date: "May 24",       amount: "+$85,000.00"  },
-  { from: "Atlas Components", method: "RTP",  date: "May 19",       amount: "+$9,800.00"   },
-]
+// ─── Crypto helpers ───────────────────────────────────────────────
 
-const STATIC_WITHDRAWALS = [
-  { to: "Atlas Components",   method: "Wire", date: "Today, 11:30", amount: "-$98,420.00"  },
-  { to: "Payroll · 84 staff", method: "ACH",  date: "Yesterday",    amount: "-$412,800.00" },
-  { to: "AWS",                method: "ACH",  date: "May 24",       amount: "-$34,200.00"  },
-  { to: "Datadog",            method: "Card", date: "May 22",       amount: "-$3,420.00"   },
-]
+const CRYPTO_SYMBOLS = new Set(["BTC", "ETH", "TRX", "USDT", "USDC", "SOL", "BNB"])
+const CRYPTO_USD_RATES: Record<string, number> = { BTC: 70000, ETH: 3500, TRX: 0.152, USDT: 1, USDC: 1, SOL: 145, BNB: 380 }
+const CRYPTO_META: Record<string, { name: string; badge: string; color: string }> = {
+  BTC:  { name: "Bitcoin",  badge: "₿", color: "bg-orange-500" },
+  ETH:  { name: "Ethereum", badge: "Ξ", color: "bg-indigo-500" },
+  TRX:  { name: "Tron",     badge: "T", color: "bg-red-500"    },
+  USDT: { name: "Tether",   badge: "₮", color: "bg-teal-500"  },
+  USDC: { name: "USD Coin", badge: "₵", color: "bg-blue-500"  },
+  SOL:  { name: "Solana",   badge: "◎", color: "bg-purple-500" },
+  BNB:  { name: "BNB",      badge: "B", color: "bg-yellow-500" },
+}
 
-const CRYPTO_ASSETS = [
-  { symbol: "BTC",       name: "Bitcoin",       badge: "₿", color: "bg-orange-500", amount: "2.4821 BTC",    usd: "$173,747", change: +2.4  },
-  { symbol: "ETH",       name: "Ethereum",      badge: "Ξ", color: "bg-indigo-500", amount: "18.32 ETH",     usd: "$64,120",  change: -1.2  },
-  { symbol: "TRX",       name: "Tron",          badge: "T", color: "bg-red-500",    amount: "124,500 TRX",   usd: "$18,922",  change: +0.8  },
-  { symbol: "USDT·TRC",  name: "USDT (TRC-20)", badge: "₮", color: "bg-teal-500",  amount: "84,200 USDT",   usd: "$84,200",  change: 0     },
-  { symbol: "USDT·ERC",  name: "USDT (ERC-20)", badge: "₮", color: "bg-teal-700",  amount: "42,800 USDT",   usd: "$42,800",  change: 0     },
-]
+// ─── Page nav static config (stats filled at runtime) ─────────────
 
-// ─── Page nav data ────────────────────────────────────────────────
-
-const PAGE_NAV = [
-  { view: "accounts",     label: "Accounts",     icon: WalletIcon,       stat: "3 active",      hint: "41 currencies enabled", iconBg: "bg-blue-50 dark:bg-blue-500/10",    iconColor: "text-blue-600 dark:text-blue-400"    },
-  { view: "transactions", label: "Transactions", icon: ReceiptIcon,      stat: "248 this month",hint: "↑ 12% vs last month",   iconBg: "bg-gray-100 dark:bg-white/10",      iconColor: "text-gray-700 dark:text-gray-300"    },
-  { view: "deposit",      label: "Deposit",      icon: ArrowDownLeftIcon,stat: "+$270,561",     hint: "Received this month",   iconBg: "bg-emerald-50 dark:bg-emerald-500/10", iconColor: "text-emerald-600 dark:text-emerald-400" },
-  { view: "withdrawal",   label: "Withdrawal",   icon: ArrowUpRightIcon, stat: "-$812,400",     hint: "Sent this month",       iconBg: "bg-rose-50 dark:bg-rose-500/10",    iconColor: "text-rose-600 dark:text-rose-400"    },
-  { view: "cards",        label: "Cards",        icon: CreditCardIcon,   stat: "5 cards",       hint: "4 active · 1 frozen",   iconBg: "bg-violet-50 dark:bg-violet-500/10",iconColor: "text-violet-600 dark:text-violet-400" },
-  { view: "invest",       label: "Invest",       icon: TrendingUpIcon,   stat: "5.21% APY",     hint: "$842k swept · 14d",     iconBg: "bg-indigo-50 dark:bg-indigo-500/10",iconColor: "text-indigo-600 dark:text-indigo-400" },
-  { view: "treasury",     label: "Treasury",     icon: ZapIcon,          stat: "$2.1M",         hint: "Under management",      iconBg: "bg-amber-50 dark:bg-amber-500/10",  iconColor: "text-amber-600 dark:text-amber-400"  },
-  { view: "reports",      label: "Reports",      icon: BarChart3Icon,    stat: "12 reports",    hint: "Last updated today",    iconBg: "bg-pink-50 dark:bg-pink-500/10",    iconColor: "text-pink-600 dark:text-pink-400"    },
+const PAGE_NAV_CONFIG = [
+  { view: "accounts",     label: "Accounts",     icon: WalletIcon,        iconBg: "bg-blue-50 dark:bg-blue-500/10",       iconColor: "text-blue-600 dark:text-blue-400"       },
+  { view: "transactions", label: "Transactions", icon: ReceiptIcon,       iconBg: "bg-gray-100 dark:bg-white/10",         iconColor: "text-gray-700 dark:text-gray-300"       },
+  { view: "deposit",      label: "Deposit",      icon: ArrowDownLeftIcon, iconBg: "bg-emerald-50 dark:bg-emerald-500/10", iconColor: "text-emerald-600 dark:text-emerald-400" },
+  { view: "withdrawal",   label: "Withdrawal",   icon: ArrowUpRightIcon,  iconBg: "bg-rose-50 dark:bg-rose-500/10",       iconColor: "text-rose-600 dark:text-rose-400"       },
+  { view: "cards",        label: "Cards",        icon: CreditCardIcon,    iconBg: "bg-violet-50 dark:bg-violet-500/10",   iconColor: "text-violet-600 dark:text-violet-400"   },
+  { view: "invest",       label: "Invest",       icon: TrendingUpIcon,    iconBg: "bg-indigo-50 dark:bg-indigo-500/10",   iconColor: "text-indigo-600 dark:text-indigo-400"   },
+  { view: "treasury",     label: "Treasury",     icon: ZapIcon,           iconBg: "bg-amber-50 dark:bg-amber-500/10",     iconColor: "text-amber-600 dark:text-amber-400"     },
+  { view: "reports",      label: "Reports",      icon: BarChart3Icon,     iconBg: "bg-pink-50 dark:bg-pink-500/10",       iconColor: "text-pink-600 dark:text-pink-400"       },
 ] as const
 
 // ─── BalanceCard ──────────────────────────────────────────────────
@@ -122,7 +115,7 @@ function BalanceCard() {
     )
   }
 
-  const data = overview ?? FALLBACK_BALANCE as typeof overview
+  const data = overview ?? (FALLBACK_BALANCE as NonNullable<typeof overview>)
   const chartData = (overview?.balanceChartData?.[period] ?? FALLBACK_CHART[period]) as number[]
   const balanceNum  = parseFloat(data!.currentBalance)
   const balanceInt  = Math.floor(balanceNum).toLocaleString()
@@ -283,6 +276,31 @@ function LiveKPIStrip() {
 
 function PageNavStrip() {
   const { setView } = useDashboardNav()
+  const { data: accounts } = useServerData(queryAccounts)
+  const { data: txns }     = useServerData(queryTransactions)
+  const { data: cards }    = useServerData(queryCards)
+  const { data: overview } = useServerData(queryBalanceOverview)
+
+  const acctCount    = accounts?.length ?? 0
+  const currencies   = accounts ? new Set(accounts.map((a) => a.currency)).size : 0
+  const txnCount     = txns?.length ?? 0
+  const depositStat  = overview ? `+$${parseFloat(overview.inflowAmount).toLocaleString()}` : "—"
+  const withdrawStat = overview ? `-$${parseFloat(overview.outflowAmount).toLocaleString()}` : "—"
+  const cardCount    = cards?.length ?? 0
+  const activeCards  = cards?.filter((c) => c.status === "active").length ?? 0
+  const frozenCards  = cards?.filter((c) => c.status === "frozen").length ?? 0
+  const apyStat      = overview ? `${parseFloat(overview.yieldApy).toFixed(2)}% APY` : "—"
+
+  const stats: Record<string, { stat: string; hint: string }> = {
+    accounts:     { stat: acctCount ? `${acctCount} active`       : "—", hint: `${currencies} currencies enabled` },
+    transactions: { stat: txnCount  ? `${txnCount} this month`    : "—", hint: "All transactions"                },
+    deposit:      { stat: depositStat,                                     hint: "Received this month"            },
+    withdrawal:   { stat: withdrawStat,                                    hint: "Sent this month"                },
+    cards:        { stat: cardCount  ? `${cardCount} cards`        : "—", hint: `${activeCards} active · ${frozenCards} frozen` },
+    invest:       { stat: apyStat,                                         hint: overview ? `$${parseFloat(overview.currentBalance).toLocaleString()} swept` : "—" },
+    treasury:     { stat: "$2.1M",                                         hint: "Under management"               },
+    reports:      { stat: "12 reports",                                    hint: "Last updated today"             },
+  }
 
   return (
     <div className="col-span-12">
@@ -291,8 +309,9 @@ function PageNavStrip() {
         <span className="text-[11.5px] text-gray-400 dark:text-gray-500">Click any card to open</span>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3">
-        {PAGE_NAV.map((p) => {
+        {PAGE_NAV_CONFIG.map((p) => {
           const Icon = p.icon
+          const s = stats[p.view]
           return (
             <button
               key={p.view}
@@ -303,8 +322,8 @@ function PageNavStrip() {
                 <Icon className={cn("h-4 w-4", p.iconColor)} />
               </div>
               <div className="text-[10.5px] text-gray-500 dark:text-gray-400">{p.label}</div>
-              <div className="text-[14px] font-semibold tabular-nums mt-0.5 leading-snug">{p.stat}</div>
-              <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 leading-snug truncate">{p.hint}</div>
+              <div className="text-[14px] font-semibold tabular-nums mt-0.5 leading-snug">{s.stat}</div>
+              <div className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5 leading-snug truncate">{s.hint}</div>
               <ArrowRightIcon className="h-3 w-3 text-gray-300 dark:text-gray-600 mt-2 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition" />
             </button>
           )
@@ -424,24 +443,30 @@ function AccountsList() {
             <div className="col-span-3 text-right">Balance</div>
             <div className="col-span-2 text-right">Status</div>
           </div>
-          {accounts.map((a) => (
-            <div key={a.id} className="grid grid-cols-12 gap-2 px-1 py-2.5 items-center text-[12.5px] rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition">
-              <div className="col-span-4 flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-md bg-gray-100 dark:bg-white/10 grid place-items-center text-gray-600 dark:text-gray-400 shrink-0">
-                  <WalletIcon className="h-3.5 w-3.5" />
+          {accounts.map((a) => {
+            const isCrypto = CRYPTO_SYMBOLS.has(a.currency)
+            const balDisplay = isCrypto
+              ? `${parseFloat(a.balance).toLocaleString()} ${a.currency}`
+              : `$${parseFloat(a.balance).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+            return (
+              <div key={a.id} className="grid grid-cols-12 gap-2 px-1 py-2.5 items-center text-[12.5px] rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition">
+                <div className="col-span-4 flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-md bg-gray-100 dark:bg-white/10 grid place-items-center text-gray-600 dark:text-gray-400 shrink-0">
+                    {isCrypto ? <span className="text-[11px] font-bold">{CRYPTO_META[a.currency]?.badge ?? a.currency[0]}</span> : <WalletIcon className="h-3.5 w-3.5" />}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{a.name}</div>
+                    <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">••• {a.lastFour}</div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{a.name}</div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">••• {a.lastFour}</div>
+                <div className="col-span-3 text-gray-600 dark:text-gray-400 truncate">{a.bankName}</div>
+                <div className="col-span-3 text-right tabular-nums font-semibold">{balDisplay}</div>
+                <div className="col-span-2 text-right">
+                  <Tag tone={accountStatusTone[a.status]}>{a.status === "earning" ? "Earning" : a.status === "active" ? "Active" : "Pending"}</Tag>
                 </div>
               </div>
-              <div className="col-span-3 text-gray-600 dark:text-gray-400 truncate">{a.bankName}</div>
-              <div className="col-span-3 text-right tabular-nums font-semibold">{a.balance}</div>
-              <div className="col-span-2 text-right">
-                <Tag tone={accountStatusTone[a.status]}>{a.status === "earning" ? "Earning" : a.status === "active" ? "Active" : "Pending"}</Tag>
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
     </div>
@@ -499,13 +524,16 @@ function CashFlowCard() {
 function RecentTransactions() {
   const { setView } = useDashboardNav()
   const { data: txns, isLoading } = useServerData(queryTransactions)
+  const recent = txns?.slice(0, 5) ?? []
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 col-span-12">
       <div className="px-5 py-4 flex items-center justify-between border-b border-gray-200 dark:border-white/10">
         <div>
           <h3 className="text-[14.5px] font-semibold tracking-tight">Recent transactions</h3>
-          <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">{txns ? `${txns.length} transactions` : "Loading…"}</p>
+          <p className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+            {isLoading ? "Loading…" : txns?.length ? `Showing ${recent.length} of ${txns.length}` : "No transactions yet"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="gap-1.5"><FilterIcon className="h-3.5 w-3.5" />Filter</Button>
@@ -516,38 +544,10 @@ function RecentTransactions() {
 
       {isLoading ? (
         <div className="p-5 space-y-3 animate-pulse">{[0,1,2].map((i) => <div key={i} className="h-12 bg-gray-100 dark:bg-white/10 rounded" />)}</div>
-      ) : !txns?.length ? (
-        /* Static fallback transactions */
-        <div>
-          <div className="grid grid-cols-12 gap-2 px-5 py-2 text-[11px] uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 border-b border-gray-100 dark:border-white/5">
-            <div className="col-span-4">Description</div><div className="col-span-3">Account</div>
-            <div className="col-span-2">Date</div><div className="col-span-2 text-right">Amount</div><div className="col-span-1 text-right">Status</div>
-          </div>
-          {[
-            { desc: "Northwind Inc. transfer",   cat: "Wire inbound",      acct: "OPS ••4910", date: "May 26", amount: "+$142,500",  tone: "green", dir: "↓" },
-            { desc: "Payroll disbursement",       cat: "ACH outbound",      acct: "OPS ••4910", date: "May 25", amount: "-$412,800",  tone: "rose",  dir: "↑" },
-            { desc: "AWS cloud services",         cat: "ACH / SaaS",        acct: "OPS ••4910", date: "May 24", amount: "-$34,200",   tone: "rose",  dir: "↑" },
-            { desc: "Client retainer",            cat: "Wire inbound",      acct: "SAV ••7823", date: "May 24", amount: "+$85,000",   tone: "green", dir: "↓" },
-            { desc: "Datadog auto-pay",           cat: "Card auto-pay",     acct: "CARD ••0002",date: "May 22", amount: "-$3,420",    tone: "brand", dir: "⚡" },
-            { desc: "OKX crypto settlement",      cat: "Crypto / TRX",      acct: "OPS ••4910", date: "May 22", amount: "+$12,920",   tone: "green", dir: "↓" },
-          ].map((r, i) => (
-            <div key={i} className="grid grid-cols-12 gap-2 px-5 py-3 items-center text-[12.5px] border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition">
-              <div className="col-span-4 flex items-center gap-2.5">
-                <div className={cn("h-8 w-8 rounded-md grid place-items-center shrink-0 text-[13px]",
-                  r.tone === "green" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600" :
-                  r.tone === "rose"  ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600" :
-                                       "bg-blue-50 dark:bg-blue-500/10 text-blue-600")}>{r.dir}</div>
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{r.desc}</div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{r.cat}</div>
-                </div>
-              </div>
-              <div className="col-span-3 text-gray-600 dark:text-gray-400 font-mono text-[11.5px] truncate">{r.acct}</div>
-              <div className="col-span-2 text-gray-500 dark:text-gray-400">{r.date}</div>
-              <div className={cn("col-span-2 text-right tabular-nums font-semibold", r.amount.startsWith("+") ? "text-emerald-600" : "text-gray-900 dark:text-white")}>{r.amount}</div>
-              <div className="col-span-1 text-right"><Tag tone={r.tone as "green"|"rose"|"brand"}>Settled</Tag></div>
-            </div>
-          ))}
+      ) : !recent.length ? (
+        <div className="py-16 text-center text-[13px] text-gray-400 dark:text-gray-500">
+          <ReceiptIcon className="h-8 w-8 mx-auto mb-3 text-gray-200 dark:text-white/10" />
+          No transactions yet.
         </div>
       ) : (
         <>
@@ -555,12 +555,12 @@ function RecentTransactions() {
             <div className="col-span-4">Description</div><div className="col-span-3">Account</div>
             <div className="col-span-2">Date</div><div className="col-span-2 text-right">Amount</div><div className="col-span-1 text-right">Status</div>
           </div>
-          {txns.map((r) => (
+          {recent.map((r) => (
             <div key={r.id} className="grid grid-cols-12 gap-2 px-5 py-3 items-center text-[12.5px] border-b border-gray-100 dark:border-white/5 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition">
               <div className="col-span-4 flex items-center gap-2.5">
                 <div className={cn("h-8 w-8 rounded-md grid place-items-center shrink-0",
-                  r.statusTone==="green" ? "bg-emerald-50 text-emerald-600" :
-                  r.statusTone==="rose"  ? "bg-rose-50 text-rose-600" : "bg-blue-50 text-blue-600"
+                  r.statusTone==="green" ? "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600" :
+                  r.statusTone==="rose"  ? "bg-rose-50 dark:bg-rose-500/10 text-rose-600" : "bg-blue-50 dark:bg-blue-500/10 text-blue-600"
                 )}>{r.direction==="inbound" ? "↓" : r.direction==="auto" ? "⚡" : "↑"}</div>
                 <div className="min-w-0">
                   <div className="font-medium truncate">{r.description}</div>
@@ -582,7 +582,14 @@ function RecentTransactions() {
 // ─── DepositWithdrawalPreview ─────────────────────────────────────
 
 function DepositWithdrawalPreview() {
-  const { setView } = useDashboardNav()
+  const { setView }                       = useDashboardNav()
+  const { data: txns, isLoading }         = useServerData(queryTransactions)
+  const { data: overview }                = useServerData(queryBalanceOverview)
+
+  const deposits    = (txns ?? []).filter((t) => t.direction === "inbound").slice(0, 4)
+  const withdrawals = (txns ?? []).filter((t) => t.direction === "outbound").slice(0, 4)
+  const depositTotal    = overview ? `+$${parseFloat(overview.inflowAmount).toLocaleString()}` : "…"
+  const withdrawalTotal = overview ? `-$${parseFloat(overview.outflowAmount).toLocaleString()}` : "…"
 
   return (
     <div className="col-span-12 lg:col-span-8 grid grid-cols-2 gap-4">
@@ -590,7 +597,7 @@ function DepositWithdrawalPreview() {
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
         <SectionHeader
           title="Recent deposits"
-          subtitle="+$270,561 this month"
+          subtitle={`${depositTotal} this month`}
           right={
             <button onClick={() => setView("deposit")} className="text-[12px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
               View all<ArrowRightIcon className="h-3 w-3" />
@@ -598,14 +605,18 @@ function DepositWithdrawalPreview() {
           }
         />
         <div className="mt-3 space-y-2">
-          {STATIC_DEPOSITS.map((d, i) => (
-            <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-100 dark:border-white/5 last:border-0">
+          {isLoading ? (
+            [0,1,2].map((i) => <div key={i} className="h-9 bg-gray-100 dark:bg-white/10 rounded animate-pulse" />)
+          ) : !deposits.length ? (
+            <div className="py-6 text-center text-[12px] text-gray-400">No deposits yet.</div>
+          ) : deposits.map((d) => (
+            <div key={d.id} className="flex items-center gap-2.5 py-1.5 border-b border-gray-100 dark:border-white/5 last:border-0">
               <div className="h-7 w-7 rounded-full bg-emerald-50 dark:bg-emerald-500/10 grid place-items-center shrink-0 text-emerald-600">
                 <ArrowDownLeftIcon className="h-3.5 w-3.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[12.5px] font-medium truncate">{d.from}</div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400">{d.method} · {d.date}</div>
+                <div className="text-[12.5px] font-medium truncate">{d.description}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">{d.category} · {d.transactionDate}</div>
               </div>
               <div className="text-[12.5px] font-semibold tabular-nums text-emerald-600 dark:text-emerald-400 shrink-0">{d.amount}</div>
             </div>
@@ -623,7 +634,7 @@ function DepositWithdrawalPreview() {
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
         <SectionHeader
           title="Recent withdrawals"
-          subtitle="-$812,400 this month"
+          subtitle={`${withdrawalTotal} this month`}
           right={
             <button onClick={() => setView("withdrawal")} className="text-[12px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
               View all<ArrowRightIcon className="h-3 w-3" />
@@ -631,14 +642,18 @@ function DepositWithdrawalPreview() {
           }
         />
         <div className="mt-3 space-y-2">
-          {STATIC_WITHDRAWALS.map((d, i) => (
-            <div key={i} className="flex items-center gap-2.5 py-1.5 border-b border-gray-100 dark:border-white/5 last:border-0">
+          {isLoading ? (
+            [0,1,2].map((i) => <div key={i} className="h-9 bg-gray-100 dark:bg-white/10 rounded animate-pulse" />)
+          ) : !withdrawals.length ? (
+            <div className="py-6 text-center text-[12px] text-gray-400">No withdrawals yet.</div>
+          ) : withdrawals.map((d) => (
+            <div key={d.id} className="flex items-center gap-2.5 py-1.5 border-b border-gray-100 dark:border-white/5 last:border-0">
               <div className="h-7 w-7 rounded-full bg-rose-50 dark:bg-rose-500/10 grid place-items-center shrink-0 text-rose-600">
                 <ArrowUpRightIcon className="h-3.5 w-3.5" />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[12.5px] font-medium truncate">{d.to}</div>
-                <div className="text-[11px] text-gray-500 dark:text-gray-400">{d.method} · {d.date}</div>
+                <div className="text-[12.5px] font-medium truncate">{d.description}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400">{d.category} · {d.transactionDate}</div>
               </div>
               <div className="text-[12.5px] font-semibold tabular-nums text-rose-600 dark:text-rose-400 shrink-0">{d.amount}</div>
             </div>
@@ -658,13 +673,20 @@ function DepositWithdrawalPreview() {
 // ─── CryptoBalances ───────────────────────────────────────────────
 
 function CryptoBalances() {
-  const { setView } = useDashboardNav()
+  const { setView }               = useDashboardNav()
+  const { data: accounts, isLoading } = useServerData(queryAccounts)
+
+  const cryptoAccounts = (accounts ?? []).filter((a) => CRYPTO_SYMBOLS.has(a.currency))
+  const totalUsd = cryptoAccounts.reduce((sum, a) => {
+    const rate = CRYPTO_USD_RATES[a.currency] ?? 0
+    return sum + parseFloat(a.balance) * rate
+  }, 0)
 
   return (
     <div className="col-span-12 lg:col-span-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
       <SectionHeader
         title="Crypto balances"
-        subtitle={`$383,589 · 5 assets`}
+        subtitle={isLoading ? "…" : `$${totalUsd.toLocaleString("en-US", { maximumFractionDigits: 0 })} · ${cryptoAccounts.length} assets`}
         right={
           <button onClick={() => setView("deposit")} className="text-[12px] text-blue-600 dark:text-blue-400 font-medium flex items-center gap-1">
             Manage<ArrowRightIcon className="h-3 w-3" />
@@ -672,25 +694,33 @@ function CryptoBalances() {
         }
       />
       <div className="mt-3 space-y-2.5">
-        {CRYPTO_ASSETS.map((a) => (
-          <div key={a.symbol} className="flex items-center gap-3">
-            <span className={cn("h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0", a.color)}>
-              {a.badge}
-            </span>
-            <div className="flex-1 min-w-0">
-              <div className="text-[12.5px] font-medium">{a.name}</div>
-              <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{a.amount}</div>
-            </div>
-            <div className="text-right shrink-0">
-              <div className="text-[13px] font-semibold tabular-nums">{a.usd}</div>
-              <div className={cn("text-[10.5px] font-medium tabular-nums",
-                a.change > 0 ? "text-emerald-600" : a.change < 0 ? "text-rose-600" : "text-gray-400 dark:text-gray-500"
-              )}>
-                {a.change > 0 ? `+${a.change}%` : a.change < 0 ? `${a.change}%` : "—"}
+        {isLoading ? (
+          [0,1,2].map((i) => <div key={i} className="h-9 bg-gray-100 dark:bg-white/10 rounded animate-pulse" />)
+        ) : !cryptoAccounts.length ? (
+          <div className="py-8 text-center text-[12px] text-gray-400">No crypto accounts yet.</div>
+        ) : cryptoAccounts.map((a) => {
+          const meta   = CRYPTO_META[a.currency] ?? { name: a.currency, badge: a.currency[0], color: "bg-gray-500" }
+          const rate   = CRYPTO_USD_RATES[a.currency] ?? 0
+          const usdVal = parseFloat(a.balance) * rate
+          const balFmt = `${parseFloat(a.balance).toLocaleString()} ${a.currency}`
+          return (
+            <div key={a.id} className="flex items-center gap-3">
+              <span className={cn("h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0", meta.color)}>
+                {meta.badge}
+              </span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12.5px] font-medium">{meta.name}</div>
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{balFmt}</div>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-[13px] font-semibold tabular-nums">
+                  ${usdVal.toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                </div>
+                <div className="text-[10.5px] text-gray-400 dark:text-gray-500">≈ USD</div>
               </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
       <Divider className="my-3" />
       <div className="flex gap-2">

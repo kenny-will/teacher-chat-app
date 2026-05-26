@@ -407,6 +407,23 @@
   border-radius: var(--radius-sm);
 }
 
+/* =========================================================================
+ *  Google Translate — suppress the default toolbar / banner
+ * ========================================================================= */
+/* Hide the floating bar Google injects at the top of the page */
+.goog-te-banner-frame.skiptranslate,
+.goog-te-banner-frame { display: none !important; }
+/* Undo the body push-down that bar causes */
+body { top: 0px !important; }
+/* Hide the widget container (the select element is still queryable via JS) */
+#google_translate_element { visibility: hidden; height: 0; overflow: hidden; }
+/* Hide tooltip / bubble Google injects on hover */
+#goog-gt-tt,
+.goog-tooltip,
+.goog-te-bubble-frame { display: none !important; }
+/* Restore link decoration stripped by Google Translate */
+.goog-te-menu-value:hover { text-decoration: none !important; }
+
 
 /* @import "tailwindcss";
 @import "tw-animate-css";

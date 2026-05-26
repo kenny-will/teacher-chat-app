@@ -221,6 +221,27 @@ export async function adminDeleteAccount(accountId: string): Promise<void> {
   await repo.deleteAccount(accountId)
 }
 
+/** User: cancel their own pending deposit (removes it from the DB). */
+export async function userCancelDeposit(txnId: string): Promise<void> {
+  const userId = await requireUserId()
+  await repo.deleteTransaction(txnId, userId)
+}
+
+/** User: edit description/amount on a pending deposit they own. */
+export async function userEditDeposit(
+  txnId: string,
+  params: { description: string; amountUsd: number; memo: string },
+): Promise<void> {
+  const userId = await requireUserId()
+  const formatted = `+$${params.amountUsd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  await repo.updateTransactionFields(txnId, {
+    description: params.description || `Deposit via ACH`,
+    amount: formatted,
+    category: 'Deposit · ACH',
+    accountRef: params.memo || 'Operating · Primary',
+  })
+}
+
 /** Admin: approve a transaction (set status → Approved). */
 export async function adminApproveTransaction(txnId: string): Promise<void> {
   await requireAdmin()

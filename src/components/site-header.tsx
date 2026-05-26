@@ -7,6 +7,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useDashboardNav } from "@/contexts/dashboard-nav"
 import { useAuthOptional } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
+import { LanguageSwitcher } from "@/components/google-translate"
 
 const USER_BREADCRUMBS: Record<string, string[]> = {
   overview: ["Northwind Inc.", "Workspace", "Overview"],
@@ -107,6 +108,9 @@ export function SiteHeader() {
               ⌘K
             </kbd>
           </div>
+
+          {/* Language */}
+          <LanguageSwitcher variant="dashboard" />
 
           {/* Notifications */}
           <button className="relative h-9 w-9 grid place-items-center rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/8 transition">

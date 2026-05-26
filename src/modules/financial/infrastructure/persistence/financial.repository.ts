@@ -221,6 +221,24 @@ export async function insertTransaction(data: NewUserTransaction) {
   return row
 }
 
+export async function deleteTransaction(id: string, userId: string) {
+  await db
+    .delete(userTransactionsTable)
+    .where(eq(userTransactionsTable.id, id))
+}
+
+export async function updateTransactionFields(
+  id: string,
+  fields: Partial<Pick<NewUserTransaction, 'description' | 'amount' | 'category' | 'accountRef'>>,
+) {
+  const [row] = await db
+    .update(userTransactionsTable)
+    .set(fields)
+    .where(eq(userTransactionsTable.id, id))
+    .returning()
+  return row
+}
+
 export async function insertCard(data: NewUserCard) {
   const [row] = await db.insert(userCardsTable).values(data).returning()
   return row

@@ -4,6 +4,9 @@ import { useState } from "react"
 import Link from "next/link"
 import { ArrowRightIcon, CheckIcon, ZapIcon, ShieldIcon, CreditCardIcon, TrendingUpIcon, BarChart3Icon, FileTextIcon, GlobeIcon, ChevronRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import Hero from "./hero"
+import Perks from "./perks"
+import { LanguageSwitcher } from "@/components/google-translate"
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 function Navbar() {
@@ -26,6 +29,7 @@ function Navbar() {
           </nav>
         </div>
         <div className="flex items-center gap-3">
+          <LanguageSwitcher variant="landing" />
           <Link href="/dashboard" className="hidden sm:block text-[13.5px] text-gray-600 hover:text-gray-900 transition px-3 py-1.5">
             Sign in
           </Link>
@@ -112,61 +116,61 @@ function HeroDashboardPreview() {
   )
 }
 
-function Hero() {
-  return (
-    <section className="relative overflow-hidden bg-white hero-wash bg-grid">
-      <div className="mx-auto max-w-7xl px-6 pt-20 pb-24 lg:pt-28 lg:pb-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          {/* Copy */}
-          <div>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#2A5CFF]/20 bg-[#2A5CFF]/5 px-3 py-1 text-[12.5px] text-[#2A5CFF] font-medium mb-6">
-              <span className="h-1.5 w-1.5 rounded-full bg-[#2A5CFF] animate-pulse" />
-              Now in public beta · 1,400+ companies
-            </div>
-            <h1 className="font-display text-[52px] lg:text-[62px] leading-[1.05] tracking-tighter2 text-gray-900">
-              Move money at the{" "}
-              <em className="not-italic text-[#2A5CFF]">speed</em>{" "}
-              of your ambition.
-            </h1>
-            <p className="mt-5 text-[17px] leading-relaxed text-gray-600 max-w-[480px]">
-              Meridian gives ambitious teams unified accounts, payments, treasury, and compliance — all through one API and a beautiful dashboard.
-            </p>
-            <div className="mt-8 flex items-center gap-3 flex-wrap">
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-xl bg-[#2A5CFF] px-6 h-12 text-[14px] font-medium text-white hover:bg-[#1E47E5] transition shadow-[0_0_0_1px_rgba(42,92,255,.25),0_8px_30px_-8px_rgba(42,92,255,.45)]"
-              >
-                Start for free <ArrowRightIcon className="h-4 w-4" />
-              </Link>
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 h-12 text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition"
-              >
-                Schedule a demo
-              </Link>
-            </div>
-            <div className="mt-6 flex items-center gap-5 text-[12.5px] text-gray-500">
-              {["No credit card required", "SOC 2 Type II", "99.999% uptime SLA"].map((t) => (
-                <span key={t} className="flex items-center gap-1.5">
-                  <CheckIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
+// function Hero() {
+//   return (
+//     <section className="relative overflow-hidden bg-white hero-wash bg-grid">
+//       <div className="mx-auto max-w-7xl px-6 pt-20 pb-24 lg:pt-28 lg:pb-32">
+//         <div className="grid lg:grid-cols-2 gap-16 items-center">
+//           {/* Copy */}
+//           <div>
+//             <div className="inline-flex items-center gap-2 rounded-full border border-[#2A5CFF]/20 bg-[#2A5CFF]/5 px-3 py-1 text-[12.5px] text-[#2A5CFF] font-medium mb-6">
+//               <span className="h-1.5 w-1.5 rounded-full bg-[#2A5CFF] animate-pulse" />
+//               Now in public beta · 1,400+ companies
+//             </div>
+//             <h1 className="font-display text-[52px] lg:text-[62px] leading-[1.05] tracking-tighter2 text-gray-900">
+//               Move money at the{" "}
+//               <em className="not-italic text-[#2A5CFF]">speed</em>{" "}
+//               of your ambition.
+//             </h1>
+//             <p className="mt-5 text-[17px] leading-relaxed text-gray-600 max-w-[480px]">
+//               Meridian gives ambitious teams unified accounts, payments, treasury, and compliance — all through one API and a beautiful dashboard.
+//             </p>
+//             <div className="mt-8 flex items-center gap-3 flex-wrap">
+//               <Link
+//                 href="/dashboard"
+//                 className="flex items-center gap-2 rounded-xl bg-[#2A5CFF] px-6 h-12 text-[14px] font-medium text-white hover:bg-[#1E47E5] transition shadow-[0_0_0_1px_rgba(42,92,255,.25),0_8px_30px_-8px_rgba(42,92,255,.45)]"
+//               >
+//                 Start for free <ArrowRightIcon className="h-4 w-4" />
+//               </Link>
+//               <Link
+//                 href="/dashboard"
+//                 className="flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-6 h-12 text-[14px] font-medium text-gray-700 hover:bg-gray-50 transition"
+//               >
+//                 Schedule a demo
+//               </Link>
+//             </div>
+//             <div className="mt-6 flex items-center gap-5 text-[12.5px] text-gray-500">
+//               {["No credit card required", "SOC 2 Type II", "99.999% uptime SLA"].map((t) => (
+//                 <span key={t} className="flex items-center gap-1.5">
+//                   <CheckIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+//                   {t}
+//                 </span>
+//               ))}
+//             </div>
+//           </div>
 
-          {/* Dashboard preview */}
-          <div className="relative">
-            <div className="absolute -inset-4 rounded-3xl bg-[#2A5CFF]/5 blur-2xl" />
-            <div className="relative">
-              <HeroDashboardPreview />
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
+//           {/* Dashboard preview */}
+//           <div className="relative">
+//             <div className="absolute -inset-4 rounded-3xl bg-[#2A5CFF]/5 blur-2xl" />
+//             <div className="relative">
+//               <HeroDashboardPreview />
+//             </div>
+//           </div>
+//         </div>
+//       </div>
+//     </section>
+//   )
+// }
 
 // ─── Marquee ──────────────────────────────────────────────────────────────────
 const MARQUEE_COMPANIES = [
@@ -709,7 +713,7 @@ export function LandingPage() {
       <Navbar />
       <main className="flex-1">
         <Hero />
-        <Marquee />
+        <Perks />
         <Features />
         <DeepDive />
         <MetricsStrip />

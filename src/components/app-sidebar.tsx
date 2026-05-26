@@ -73,10 +73,6 @@ const ADMIN_NAV = [
   { key: "withdrawals", label: "Withdrawals", icon: ArrowUpRightIcon },
   { key: "simulate", label: "Simulate", icon: FlaskConicalIcon },
   { key: "cards", label: "Cards", icon: CreditCardIcon },
-  { key: "activity", label: "Activity", icon: ActivityIcon },
-  { key: "support", label: "Support", icon: FileTextIcon },
-  { key: "notifications", label: "Notifications", icon: BellIcon },
-  { key: "audit", label: "Audit Log", icon: LockIcon },
   { key: "chat", label: "Live Chat", icon: MessageCircleIcon },
   { key: "locations", label: "Live Locations", icon: MapPinIcon },
 ] as const;
@@ -320,23 +316,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
           )}
 
-          {/* System health — admin mode only */}
-          {mode === "admin" && (
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 p-3">
-              <div className="text-[10.5px] uppercase tracking-widest text-gray-500 dark:text-gray-400">
-                Platform health
-              </div>
-              <div className="mt-1 flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[12.5px] font-semibold">
-                  All systems normal
-                </span>
-              </div>
-              <div className="text-[10.5px] text-gray-500 dark:text-gray-400 mt-1">
-                99.999% · 30d
-              </div>
-            </div>
-          )}
+        
 
           {/* Mode switcher — admins only */}
           {isAdmin && (
