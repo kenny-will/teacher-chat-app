@@ -12,8 +12,6 @@ import { AreaChart, StackedBarChart, DonutChart, Sparkline } from "@/components/
 import { Delta, Tag, AvatarBadge, SectionHeader, Divider, ProgressBar, fmtCurrency, fmtNumber } from "@/components/meridian/primitives"
 import { cn } from "@/lib/utils"
 import { useServerData } from "@/hooks/use-server-data"
-import { getKpiSummary } from "@/modules/analytics/application/queries/analytics.queries"
-import type { KpiSummaryDTO } from "@/modules/analytics/application/dtos/dashboard-metrics.dto"
 import { useAuth } from "@/contexts/auth-context"
 import { useDashboardNav } from "@/contexts/dashboard-nav"
 import {
@@ -49,31 +47,6 @@ function useFormattedDate() {
 const PERIODS = ["1W", "1M", "3M", "1Y"] as const
 type Period = (typeof PERIODS)[number]
 
-// ─── Static fallback data ─────────────────────────────────────────
-
-const FALLBACK_CHART: Record<Period, number[]> = {
-  "1W": [810000, 820000, 815000, 835000, 840000, 844000, 847234],
-  "1M": [620000, 670000, 695000, 710000, 720000, 748000, 778000, 800000, 820000, 835000, 847234],
-  "3M": [510000, 540000, 580000, 610000, 650000, 680000, 720000, 755000, 790000, 820000, 847234],
-  "1Y": [300000, 370000, 420000, 480000, 530000, 580000, 630000, 690000, 740000, 790000, 830000, 847234],
-}
-
-const FALLBACK_BALANCE = {
-  currentBalance: "847234.00", balanceDelta: "8.40", balanceChangeAmount: "66201.00",
-  inflowAmount: "1420500.00", inflowDelta: "12.30",
-  outflowAmount: "573266.00", outflowDelta: "-4.10",
-  netAmount: "847234.00",    netDelta: "21.20",
-  burnRatePerDay: "19109.00", burnRateDelta: "-2.10",
-  totalAccounts: 3,
-  allocationData: [
-    { label: "Operating", value: 45, color: "#3b82f6" },
-    { label: "Savings",   value: 30, color: "#10b981" },
-    { label: "Treasury",  value: 25, color: "#8b5cf6" },
-  ],
-  yieldApy: "5.21",
-  lastRebalancedAt: "2026-05-20",
-}
-
 // CRYPTO_SYMBOLS and CRYPTO_META are imported from @/lib/crypto-config
 
 // ─── Page nav static config (stats filled at runtime) ─────────────
@@ -105,11 +78,20 @@ function BalanceCard() {
     )
   }
 
-  const data = overview ?? (FALLBACK_BALANCE as NonNullable<typeof overview>)
-  const chartData = (overview?.balanceChartData?.[period] ?? FALLBACK_CHART[period]) as number[]
-  const balanceNum  = parseFloat(data!.currentBalance)
-  const balanceInt  = Math.floor(balanceNum).toLocaleString()
-  const balanceDec  = (balanceNum % 1).toFixed(2).slice(1)
+  if (!overview) {
+    return (
+      <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 col-span-12 lg:col-span-8 flex flex-col items-center justify-center min-h-[280px] gap-2">
+        <WalletIcon className="h-8 w-8 text-gray-200 dark:text-white/10" />
+        <p className="text-[13px] text-gray-400 dark:text-gray-500">No balance data yet.</p>
+        <p className="text-[11.5px] text-gray-400 dark:text-gray-500">Your instructor will seed your account shortly.</p>
+      </div>
+    )
+  }
+
+  const chartData  = (overview.balanceChartData?.[period] ?? []) as number[]
+  const balanceNum = parseFloat(overview.currentBalance)
+  const balanceInt = Math.floor(balanceNum).toLocaleString()
+  const balanceDec = (balanceNum % 1).toFixed(2).slice(1)
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-6 col-span-12 lg:col-span-8">
@@ -123,10 +105,10 @@ function BalanceCard() {
             <div className="font-semibold text-[48px] leading-none tracking-tight tabular-nums">
               ${balanceInt}.<span className="text-gray-400 dark:text-gray-500">{balanceDec.slice(1)}</span>
             </div>
-            <Delta value={parseFloat(data!.balanceDelta)} />
+            <Delta value={parseFloat(overview.balanceDelta)} />
           </div>
           <div className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">
-            + ${parseFloat(data!.balanceChangeAmount).toLocaleString()} over the last 30 days
+            + ${parseFloat(overview.balanceChangeAmount).toLocaleString()} over the last 30 days
           </div>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -153,15 +135,18 @@ function BalanceCard() {
       </div>
 
       <div className="mt-4">
-        <AreaChart data={chartData} labels={["", "", "", "", ""]} height={200} />
+        {chartData.length > 0
+          ? <AreaChart data={chartData} labels={[]} height={200} />
+          : <div className="h-[200px] flex items-center justify-center text-[12px] text-gray-300 dark:text-white/10">No chart data yet</div>
+        }
       </div>
 
       <div className="mt-2 grid grid-cols-4 divide-x divide-gray-200 dark:divide-white/10 border-t border-gray-200 dark:border-white/10 pt-4">
         {([
-          ["Inflow",     `$${parseFloat(data!.inflowAmount).toLocaleString()}`,    parseFloat(data!.inflowDelta)],
-          ["Outflow",    `$${parseFloat(data!.outflowAmount).toLocaleString()}`,   parseFloat(data!.outflowDelta)],
-          ["Net",        `+$${parseFloat(data!.netAmount).toLocaleString()}`,      parseFloat(data!.netDelta)],
-          ["Burn / day", `$${parseFloat(data!.burnRatePerDay).toLocaleString()}`,  parseFloat(data!.burnRateDelta)],
+          ["Inflow",     `$${parseFloat(overview.inflowAmount).toLocaleString()}`,    parseFloat(overview.inflowDelta)],
+          ["Outflow",    `$${parseFloat(overview.outflowAmount).toLocaleString()}`,   parseFloat(overview.outflowDelta)],
+          ["Net",        `+$${parseFloat(overview.netAmount).toLocaleString()}`,      parseFloat(overview.netDelta)],
+          ["Burn / day", `$${parseFloat(overview.burnRatePerDay).toLocaleString()}`,  parseFloat(overview.burnRateDelta)],
         ] as [string, string, number][]).map(([l, v, d], i) => (
           <div key={l} className={cn("px-4", i === 0 && "pl-0")}>
             <div className="text-[11.5px] text-gray-500 dark:text-gray-400">{l}</div>
@@ -190,10 +175,10 @@ function AllocationCard() {
     )
   }
 
-  const alloc = overview?.allocationData ?? FALLBACK_BALANCE.allocationData
-  const apy   = overview?.yieldApy ?? FALLBACK_BALANCE.yieldApy
-  const total = overview?.totalAccounts ?? FALLBACK_BALANCE.totalAccounts
-  const lastReb = overview?.lastRebalancedAt ?? FALLBACK_BALANCE.lastRebalancedAt
+  const alloc   = overview?.allocationData ?? []
+  const apy     = overview?.yieldApy ?? "0"
+  const total   = overview?.totalAccounts ?? 0
+  const lastReb = overview?.lastRebalancedAt ?? null
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 col-span-12 lg:col-span-4">
@@ -225,8 +210,9 @@ function AllocationCard() {
       <Divider className="my-4" />
       <div className="flex items-center justify-between text-[12px]">
         <span className="text-gray-500 dark:text-gray-400">
-          Last rebalance ·{" "}
-          {new Date(lastReb).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+          {lastReb
+            ? `Last rebalance · ${new Date(lastReb).toLocaleDateString("en-US", { month: "short", day: "numeric" })}`
+            : "No rebalance yet"}
         </span>
         <button className="text-blue-600 dark:text-blue-400 font-medium hover:underline">Rebalance now</button>
       </div>
@@ -234,30 +220,113 @@ function AllocationCard() {
   )
 }
 
-// ─── LiveKPIStrip ─────────────────────────────────────────────────
+// ─── PersonalKPIStrip ─────────────────────────────────────────────
+// Four cards driven entirely by the user's own DB data.
 
-function LiveKPIStrip() {
-  const { data: kpi, isLoading } = useServerData<KpiSummaryDTO>(getKpiSummary)
-  if (isLoading || !kpi) return null
+function PersonalKPIStrip() {
+  const { setView }               = useDashboardNav()
+  const { data: overview, isLoading: ovLoading } = useServerData(queryBalanceOverview)
+  const { data: txns,     isLoading: txLoading } = useServerData(queryTransactions)
+  const { data: accounts, isLoading: acLoading } = useServerData(queryAccounts)
+  const isLoading = ovLoading || txLoading || acLoading
 
-  const stats = [
-    { label: "Total Revenue", value: fmtCurrency(kpi.totalRevenue), delta: kpi.revenueChange },
-    { label: "Active Users",  value: fmtNumber(kpi.activeUsers),    delta: kpi.usersChange   },
-    { label: "New Signups",   value: fmtNumber(kpi.newSignups),     delta: kpi.signupsChange  },
-    { label: "Churn Rate",    value: `${kpi.churnRate.toFixed(1)}%`,delta: kpi.churnChange    },
+  const totalBalance  = overview ? parseFloat(overview.currentBalance) : null
+  const balanceDelta  = overview ? parseFloat(overview.balanceDelta) : 0
+  const totalInflow   = overview ? parseFloat(overview.inflowAmount) : null
+  const inflowDelta   = overview ? parseFloat(overview.inflowDelta) : 0
+  const totalOutflow  = overview ? parseFloat(overview.outflowAmount) : null
+  const outflowDelta  = overview ? parseFloat(overview.outflowDelta) : 0
+
+  const pendingCount  = (txns ?? []).filter(t => t.status === "Pending").length
+  const acctCount     = (accounts ?? []).length
+
+  const fmt = (n: number | null) =>
+    n == null ? "—" : `$${n.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+
+  const cards = [
+    {
+      label:   "Net Balance",
+      hint:    acctCount ? `Across ${acctCount} account${acctCount !== 1 ? "s" : ""}` : "No accounts yet",
+      value:   fmt(totalBalance),
+      delta:   balanceDelta,
+      icon:    WalletIcon,
+      iconBg:  "bg-blue-50 dark:bg-blue-500/10",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      view:    "accounts" as const,
+    },
+    {
+      label:   "Total Inflow",
+      hint:    "Received to date",
+      value:   fmt(totalInflow),
+      delta:   inflowDelta,
+      icon:    ArrowDownLeftIcon,
+      iconBg:  "bg-emerald-50 dark:bg-emerald-500/10",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      view:    "deposit" as const,
+    },
+    {
+      label:   "Total Outflow",
+      hint:    "Sent to date",
+      value:   fmt(totalOutflow),
+      delta:   outflowDelta,
+      icon:    ArrowUpRightIcon,
+      iconBg:  "bg-rose-50 dark:bg-rose-500/10",
+      iconColor: "text-rose-600 dark:text-rose-400",
+      view:    "withdrawal" as const,
+    },
+    {
+      label:   "Pending",
+      hint:    txns ? `${(txns ?? []).length} total transactions` : "No transactions yet",
+      value:   pendingCount ? `${pendingCount}` : "0",
+      delta:   null,
+      icon:    ReceiptIcon,
+      iconBg:  "bg-amber-50 dark:bg-amber-500/10",
+      iconColor: "text-amber-600 dark:text-amber-400",
+      view:    "transactions" as const,
+    },
   ]
 
-  return (
-    <div className="col-span-12 grid grid-cols-4 gap-3">
-      {stats.map((s) => (
-        <div key={s.label} className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 flex items-center justify-between">
-          <div>
-            <div className="text-[11.5px] text-gray-500 dark:text-gray-400">{s.label}</div>
-            <div className="mt-0.5 font-semibold text-[17px] tabular-nums tracking-tight">{s.value}</div>
+  if (isLoading) {
+    return (
+      <div className="col-span-12 grid grid-cols-4 gap-3">
+        {[0,1,2,3].map(i => (
+          <div key={i} className="rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 animate-pulse">
+            <div className="h-3.5 bg-gray-100 dark:bg-white/10 rounded w-24 mb-3" />
+            <div className="h-7 bg-gray-100 dark:bg-white/10 rounded w-32" />
           </div>
-          <Delta value={s.delta} />
-        </div>
-      ))}
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="col-span-12 grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {cards.map((c) => {
+        const Icon = c.icon
+        return (
+          <button
+            key={c.label}
+            onClick={() => setView(c.view)}
+            className="group rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-4 py-3 text-left hover:border-gray-300 dark:hover:border-white/20 hover:shadow-md transition flex items-start justify-between gap-3"
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <span className={cn("h-7 w-7 rounded-lg grid place-items-center shrink-0", c.iconBg)}>
+                  <Icon className={cn("h-3.5 w-3.5", c.iconColor)} />
+                </span>
+                <span className="text-[11.5px] text-gray-500 dark:text-gray-400 truncate">{c.label}</span>
+              </div>
+              <div className="font-semibold text-[22px] tabular-nums tracking-tight leading-none">{c.value}</div>
+              <div className="text-[10.5px] text-gray-400 dark:text-gray-500 mt-1 truncate">{c.hint}</div>
+            </div>
+            {c.delta != null && (
+              <div className="shrink-0 pt-0.5">
+                <Delta value={c.delta} />
+              </div>
+            )}
+          </button>
+        )
+      })}
     </div>
   )
 }
@@ -375,7 +444,7 @@ function AccountsList() {
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 col-span-12 lg:col-span-7">
       <SectionHeader
         title="Accounts"
-        subtitle={`${overview?.totalAccounts ?? FALLBACK_BALANCE.totalAccounts} active · 41 currencies enabled`}
+        subtitle={accounts ? `${accounts.length} account${accounts.length !== 1 ? "s" : ""} · ${new Set(accounts.map(a => a.currency)).size} currencies` : "Loading…"}
         right={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" className="gap-1.5">
@@ -392,38 +461,9 @@ function AccountsList() {
           {[0,1,2].map((i) => <div key={i} className="h-10 bg-gray-100 dark:bg-white/10 rounded" />)}
         </div>
       ) : !accounts?.length ? (
-        /* Static fallback accounts */
-        <div className="mt-4">
-          <div className="grid grid-cols-12 gap-2 px-1 text-[11px] uppercase tracking-[0.12em] text-gray-400 dark:text-gray-500 pb-2">
-            <div className="col-span-4">Account</div>
-            <div className="col-span-3">Partner bank</div>
-            <div className="col-span-3 text-right">Balance</div>
-            <div className="col-span-2 text-right">Status</div>
-          </div>
-          {[
-            { name: "Operating",  lastFour: "4910", bank: "First Meridian",  balance: "$484,920.00", status: "active"  },
-            { name: "Savings",    lastFour: "7823", bank: "First Meridian",  balance: "$253,970.00", status: "earning" },
-            { name: "Treasury",   lastFour: "1102", bank: "Meridian Capital",balance: "$108,344.00", status: "earning" },
-          ].map((a) => (
-            <div key={a.name} className="grid grid-cols-12 gap-2 px-1 py-2.5 items-center text-[12.5px] rounded-lg hover:bg-gray-50 dark:hover:bg-white/5 transition cursor-pointer">
-              <div className="col-span-4 flex items-center gap-2.5">
-                <div className="h-7 w-7 rounded-md bg-gray-100 dark:bg-white/10 grid place-items-center text-gray-600 dark:text-gray-400 shrink-0">
-                  <WalletIcon className="h-3.5 w-3.5" />
-                </div>
-                <div className="min-w-0">
-                  <div className="font-medium truncate">{a.name}</div>
-                  <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">••• {a.lastFour}</div>
-                </div>
-              </div>
-              <div className="col-span-3 text-gray-600 dark:text-gray-400 truncate">{a.bank}</div>
-              <div className="col-span-3 text-right tabular-nums font-semibold">{a.balance}</div>
-              <div className="col-span-2 text-right">
-                <Tag tone={accountStatusTone[a.status as keyof typeof accountStatusTone]}>
-                  {a.status === "earning" ? "Earning" : "Active"}
-                </Tag>
-              </div>
-            </div>
-          ))}
+        <div className="py-12 text-center text-[13px] text-gray-400 dark:text-gray-500">
+          <WalletIcon className="h-8 w-8 mx-auto mb-3 text-gray-200 dark:text-white/10" />
+          No accounts yet — your instructor will set up your accounts.
         </div>
       ) : (
         <div className="mt-4">
@@ -469,12 +509,7 @@ function CashFlowCard() {
   const [view, setView] = useState<"weeks" | "months">("weeks")
   const { data: overview, isLoading } = useServerData(queryBalanceOverview)
 
-  const FALLBACK_CF = {
-    weeks:  { inflow: [142,165,138,190,175,158,182,210,195,178,204,188], outflow: [98,120,95,135,110,102,128,145,138,115,142,130], labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
-    months: { inflow: [1240,1380,1290,1560,1420,1680,1820,1950,1780,1640,1890,2100], outflow: [820,950,880,1050,930,1100,1180,1250,1060,980,1140,1320], labels: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"] },
-  }
-
-  const series = overview?.cashFlowData?.[view] ?? FALLBACK_CF[view]
+  const series = overview?.cashFlowData?.[view] ?? null
 
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 col-span-12 lg:col-span-5">
@@ -494,6 +529,10 @@ function CashFlowCard() {
       />
       {isLoading ? (
         <div className="mt-4 h-[180px] bg-gray-100 dark:bg-white/10 rounded animate-pulse" />
+      ) : !series ? (
+        <div className="mt-4 h-[180px] flex items-center justify-center text-[12px] text-gray-300 dark:text-white/10">
+          No cash flow data yet
+        </div>
       ) : (
         <>
           <div className="mt-4">
@@ -777,15 +816,6 @@ function TopSpend() {
   const { setView } = useDashboardNav()
   const { data: cats, isLoading } = useServerData(queryOverviewSpendCategories)
 
-  const FALLBACK_CATS = [
-    { id: "1", label: "Payroll",       amountDisplay: "$412,800", percentage: 78, color: "#3b82f6" },
-    { id: "2", label: "Cloud/SaaS",    amountDisplay: "$37,620",  percentage: 52, color: "#8b5cf6" },
-    { id: "3", label: "Vendor/Ops",    amountDisplay: "$28,000",  percentage: 38, color: "#f59e0b" },
-    { id: "4", label: "Card spend",    amountDisplay: "$18,420",  percentage: 24, color: "#10b981" },
-  ]
-
-  const items = cats?.length ? cats : FALLBACK_CATS
-
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 col-span-12 lg:col-span-4">
       <SectionHeader title="Top spend categories" subtitle="This month"
@@ -793,9 +823,11 @@ function TopSpend() {
       />
       {isLoading ? (
         <div className="mt-3 space-y-3 animate-pulse">{[0,1,2].map((i) => <div key={i} className="h-8 bg-gray-100 dark:bg-white/10 rounded" />)}</div>
+      ) : !cats?.length ? (
+        <div className="py-10 text-center text-[12px] text-gray-400 dark:text-gray-500">No spend data yet.</div>
       ) : (
         <div className="mt-3 space-y-3">
-          {items.map((c) => (
+          {cats.map((c) => (
             <div key={c.id}>
               <div className="flex items-center justify-between text-[12.5px]">
                 <span>{c.label}</span>
@@ -816,15 +848,6 @@ function UpcomingPayments() {
   const { setView } = useDashboardNav()
   const { data: upcoming, isLoading } = useServerData(queryUpcomingPayments)
 
-  const FALLBACK_UP = [
-    { id: "1", payee: "Atlas Components",  description: "Wire · $245,000",   dueDateDisplay: "Jul 1",  statusLabel: "Awaiting",  tone: "amber" as const },
-    { id: "2", payee: "Payroll · 84 staff",description: "ACH · $412,800",    dueDateDisplay: "Jul 1",  statusLabel: "Scheduled", tone: "green" as const },
-    { id: "3", payee: "AWS",               description: "ACH · $34,200",     dueDateDisplay: "Jul 3",  statusLabel: "Scheduled", tone: "green" as const },
-    { id: "4", payee: "Office lease",      description: "ACH · $28,000",     dueDateDisplay: "Jul 5",  statusLabel: "Scheduled", tone: "green" as const },
-  ]
-
-  const items = upcoming?.length ? upcoming : FALLBACK_UP
-
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 col-span-12 lg:col-span-4">
       <SectionHeader title="Upcoming" subtitle="Next 7 days"
@@ -832,9 +855,11 @@ function UpcomingPayments() {
       />
       {isLoading ? (
         <div className="mt-3 space-y-2.5 animate-pulse">{[0,1,2].map((i) => <div key={i} className="h-12 bg-gray-100 dark:bg-white/10 rounded" />)}</div>
+      ) : !upcoming?.length ? (
+        <div className="py-10 text-center text-[12px] text-gray-400 dark:text-gray-500">No upcoming payments.</div>
       ) : (
         <ul className="mt-3 space-y-2.5">
-          {items.map((p) => (
+          {upcoming.map((p) => (
             <li key={p.id} className="flex items-center gap-3">
               <AvatarBadge name={p.payee} size={32} />
               <div className="flex-1 min-w-0">
@@ -858,15 +883,6 @@ function UpcomingPayments() {
 function TeamActivity() {
   const { data: logs, isLoading } = useServerData(queryActivityLogs)
 
-  const FALLBACK_LOGS = [
-    { id: "1", actorName: "Marcus Lee",  action: "approved a $24,800 transfer to Pinpoint LLC",  timeAgo: "2m ago"   },
-    { id: "2", actorName: "Owen Park",   action: "issued a new virtual card for SaaS spend",     timeAgo: "14m ago"  },
-    { id: "3", actorName: "Avery Chen",  action: "exported card transactions to CSV",            timeAgo: "1h ago"   },
-    { id: "4", actorName: "Marcus Lee",  action: "scheduled payroll ACH for Jul 1",              timeAgo: "3h ago"   },
-  ]
-
-  const items = logs?.length ? logs : FALLBACK_LOGS
-
   return (
     <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5 col-span-12 lg:col-span-4">
       <SectionHeader title="Team activity" subtitle="Last 24 hours"
@@ -874,9 +890,11 @@ function TeamActivity() {
       />
       {isLoading ? (
         <div className="mt-3 space-y-3 animate-pulse">{[0,1,2].map((i) => <div key={i} className="h-10 bg-gray-100 dark:bg-white/10 rounded" />)}</div>
+      ) : !logs?.length ? (
+        <div className="py-10 text-center text-[12px] text-gray-400 dark:text-gray-500">No recent activity.</div>
       ) : (
         <ul className="mt-3 space-y-3">
-          {items.map((r) => (
+          {logs.map((r) => (
             <li key={r.id} className="flex items-start gap-2.5">
               <AvatarBadge name={r.actorName} size={28} />
               <div className="flex-1 text-[12.5px]">
@@ -977,7 +995,7 @@ export function OverviewPage() {
       </div>
 
       <div className="grid grid-cols-12 gap-4">
-        <LiveKPIStrip />
+        <PersonalKPIStrip />
         <PageNavStrip />
         <BalanceCard />
         <AllocationCard />

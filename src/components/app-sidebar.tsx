@@ -33,6 +33,7 @@ import { useRouter } from "next/navigation";
 import { useDashboardNav } from "@/contexts/dashboard-nav";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { SITE_TITLE } from "@/lib/site";
 import {
   Sidebar,
   SidebarContent,
@@ -61,7 +62,6 @@ const USER_NAV = [
   { key: "cards", label: "Cards", icon: CreditCardIcon, badge: "6" },
   { key: "invest", label: "Invest", icon: TrendingUpIcon },
 ] as const;
-
 
 const ADMIN_NAV = [
   { key: "overview", label: "Overview", icon: LayoutDashboardIcon },
@@ -127,7 +127,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <ZapIcon className="h-3.5 w-3.5 text-white dark:text-gray-900" />
                 </div>
                 <span className="text-[15px] font-semibold tracking-tight">
-                  Meridian
+                  {SITE_TITLE}
                 </span>
                 <span className="ml-auto text-[10px] font-medium bg-gray-100 dark:bg-white/10 text-gray-700 dark:text-gray-300 rounded-full px-2 py-0.5">
                   {mode === "admin" ? "ADMIN" : "v4.2"}
@@ -184,7 +184,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           {mode === "admin" && (
             <SidebarGroupLabel className="text-[10.5px] uppercase tracking-[0.14em] text-gray-400 dark:text-gray-500 px-3">
-              Manage Student
+              Manage User
             </SidebarGroupLabel>
           )}
           <SidebarMenu>
@@ -252,8 +252,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
             </div>
           )}
-
-        
 
           {/* Mode switcher — admins only */}
           {isAdmin && (

@@ -269,7 +269,7 @@ export function AdminChatPage() {
                   <SearchIcon className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                   <input
                     className="flex-1 bg-transparent text-[12px] placeholder:text-gray-400 outline-none"
-                    placeholder="Search students…"
+                    placeholder="Search users…"
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                   />
@@ -310,7 +310,7 @@ export function AdminChatPage() {
                       Select a conversation
                     </div>
                     <div className="text-[12.5px] text-gray-400 mt-1">
-                      Choose a student from the left to view and reply to their
+                      Choose a user from the left to view and reply to their
                       messages.
                     </div>
                   </div>
@@ -340,8 +340,7 @@ export function AdminChatPage() {
                       <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
                         <BotIcon className="h-8 w-8 text-gray-200 dark:text-white/10" />
                         <div className="text-[12.5px] text-gray-400">
-                          No messages yet. The student hasn&apos;t sent
-                          anything.
+                          No messages yet. The user hasn&apos;t sent anything.
                         </div>
                       </div>
                     ) : (
