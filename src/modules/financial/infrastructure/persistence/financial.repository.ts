@@ -1,5 +1,6 @@
 import { eq, asc, desc } from 'drizzle-orm'
 import { db } from '@/shared/infrastructure/database/client'
+import { usersTable } from '@/modules/users/infrastructure/persistence/schema'
 import {
   userBalanceOverviewsTable,
   userAccountsTable,
@@ -125,6 +126,31 @@ export async function getCardProgramStats(userId: string) {
   return row ?? null
 }
 
+export async function getAllTransactionsWithUsers() {
+  return db
+    .select({
+      id: userTransactionsTable.id,
+      userId: userTransactionsTable.userId,
+      description: userTransactionsTable.description,
+      category: userTransactionsTable.category,
+      amount: userTransactionsTable.amount,
+      direction: userTransactionsTable.direction,
+      transactionDate: userTransactionsTable.transactionDate,
+      accountRef: userTransactionsTable.accountRef,
+      status: userTransactionsTable.status,
+      statusTone: userTransactionsTable.statusTone,
+      sortOrder: userTransactionsTable.sortOrder,
+      createdAt: userTransactionsTable.createdAt,
+      userName: usersTable.name,
+      userEmail: usersTable.email,
+      userAvatarUrl: usersTable.avatarUrl,
+    })
+    .from(userTransactionsTable)
+    .innerJoin(usersTable, eq(userTransactionsTable.userId, usersTable.id))
+    .orderBy(desc(userTransactionsTable.createdAt))
+    .limit(2000)
+}
+
 // ─── Writes ───────────────────────────────────────────────────────────────────
 
 export async function upsertBalanceOverview(userId: string, data: Omit<NewUserBalanceOverview, 'id' | 'userId'>) {
@@ -164,6 +190,30 @@ export async function upsertCardProgramStats(userId: string, data: Omit<NewUserC
 export async function insertAccount(data: NewUserAccount) {
   const [row] = await db.insert(userAccountsTable).values(data).returning()
   return row
+}
+
+export async function updateAccount(id: string, data: Partial<Omit<NewUserAccount, 'id' | 'userId' | 'createdAt'>>) {
+  const [row] = await db
+    .update(userAccountsTable)
+    .set(data)
+    .where(eq(userAccountsTable.id, id))
+    .returning()
+  return row
+}
+
+export async function deleteAccount(id: string) {
+  await db.delete(userAccountsTable).where(eq(userAccountsTable.id, id))
+}
+
+export async function adjustAccountBalance(id: string, amount: number, direction: 'add' | 'subtract') {
+  const [account] = await db.select().from(userAccountsTable).where(eq(userAccountsTable.id, id)).limit(1)
+  if (!account) return
+  const current = parseFloat(account.balance) || 0
+  const newBalance = direction === 'add' ? current + amount : Math.max(0, current - amount)
+  await db
+    .update(userAccountsTable)
+    .set({ balance: newBalance.toFixed(2) })
+    .where(eq(userAccountsTable.id, id))
 }
 
 export async function insertTransaction(data: NewUserTransaction) {
@@ -350,13 +400,15 @@ export async function seedDemoFinancialData(userId: string, ownerName: string) {
     },
   })
 
-  // Bank accounts
+  // Bank accounts (balance stored as plain numeric string)
   const accounts = [
-    { name: 'Operating · USD', lastFour: '4910', bankName: 'JPMorgan Chase', balance: '$398,420.11', currency: 'USD', status: 'active' as const, sortOrder: 0 },
-    { name: 'Treasury Sweep', lastFour: '7823', bankName: 'Meridian + BNY', balance: '$542,180.00', currency: 'USD', status: 'earning' as const, sortOrder: 1 },
-    { name: 'Payroll · USD', lastFour: '1042', bankName: 'Mercury · partner', balance: '$118,402.91', currency: 'USD', status: 'active' as const, sortOrder: 2 },
-    { name: 'EUR Operating', lastFour: '0091', bankName: 'BNP Paribas', balance: '€ 84,219.40', currency: 'EUR', status: 'active' as const, sortOrder: 3 },
-    { name: 'GBP Trade', lastFour: '7711', bankName: 'HSBC', balance: '£ 41,180.00', currency: 'GBP', status: 'pending' as const, sortOrder: 4 },
+    { name: 'Operating · USD', lastFour: '4910', bankName: 'JPMorgan Chase', balance: '398420.11', currency: 'USD', status: 'active' as const, apy: '0', routing: '021000021', accountType: 'bank', sortOrder: 0 },
+    { name: 'Treasury Sweep', lastFour: '7823', bankName: 'Meridian + BNY', balance: '542180.00', currency: 'USD', status: 'earning' as const, apy: '5.2100', routing: 'meridian-internal', accountType: 'sweep', sortOrder: 1 },
+    { name: 'Payroll · USD', lastFour: '1042', bankName: 'Mercury · partner', balance: '118402.91', currency: 'USD', status: 'active' as const, apy: '0', routing: '084009519', accountType: 'bank', sortOrder: 2 },
+    { name: 'EUR Operating', lastFour: '0091', bankName: 'BNP Paribas', balance: '84219.40', currency: 'EUR', status: 'active' as const, apy: '0', routing: 'IBAN FR76', accountType: 'bank', sortOrder: 3 },
+    { name: 'GBP Trade', lastFour: '7711', bankName: 'HSBC', balance: '41180.00', currency: 'GBP', status: 'pending' as const, apy: '0', routing: '40-05-30', accountType: 'bank', sortOrder: 4 },
+    { name: 'Bitcoin Wallet', lastFour: 'a1f9', bankName: 'Bitcoin Network', balance: '1.24500000', currency: 'BTC', status: 'active' as const, apy: '0', routing: '1A1zP1eP5QGefi2DMPTfTL5SLmv7Divf', accountType: 'crypto', sortOrder: 5 },
+    { name: 'Ethereum Wallet', lastFour: '3c2e', bankName: 'Ethereum Network', balance: '12.50000000', currency: 'ETH', status: 'active' as const, apy: '0', routing: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F', accountType: 'crypto', sortOrder: 6 },
   ]
   for (const a of accounts) {
     await insertAccount({ userId, ...a })

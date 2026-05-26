@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CheckIcon, XIcon, PauseIcon, UsersIcon, RefreshCwIcon } from "lucide-react"
+import { CheckIcon, XIcon, PauseIcon, UsersIcon, RefreshCwIcon, ChevronRightIcon } from "lucide-react"
 import { Tag, AvatarBadge, SectionHeader } from "@/components/meridian/primitives"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
@@ -10,6 +10,7 @@ import {
   adminRejectTransaction,
   adminHoldTransaction,
   adminGetUserFinancialData,
+  adminGetUsers,
 } from "@/modules/financial/application/mutations/financial.mutations"
 import { useServerData } from "@/hooks/use-server-data"
 import { useDashboardNav } from "@/contexts/dashboard-nav"
@@ -46,6 +47,60 @@ export function NoStudentSelected({ message }: { message?: string }) {
       >
         Select a student →
       </button>
+    </div>
+  )
+}
+
+// ─── Inline student picker (replaces the NoStudentSelected gate) ──────────────
+
+function getInitials(name: string) {
+  const p = name.trim().split(/\s+/)
+  return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase()
+}
+
+type RawUser = Awaited<ReturnType<typeof adminGetUsers>>[number]
+
+export function InlineStudentPicker({ hint }: { hint?: string }) {
+  const { setSelectedUser } = useDashboardNav()
+  const { data: users, isLoading } = useServerData(() => adminGetUsers(), [])
+
+  return (
+    <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5">
+      <div className="px-5 py-4 border-b border-gray-200 dark:border-white/10">
+        <div className="text-[14px] font-semibold dark:text-white">Select a student</div>
+        <div className="text-[12px] text-gray-500 dark:text-gray-400 mt-0.5">
+          {hint ?? "Click a student to view their data for this section."}
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="p-6 space-y-3 animate-pulse">
+          {[0, 1, 2, 3].map(i => <div key={i} className="h-14 bg-gray-100 dark:bg-white/8 rounded-lg" />)}
+        </div>
+      ) : (users ?? []).filter(u => u.role !== 'admin').length === 0 ? (
+        <div className="py-12 text-center text-[12.5px] text-gray-400 dark:text-gray-500">No students found.</div>
+      ) : (
+        (users ?? []).filter(u => u.role !== 'admin').map((u: RawUser) => (
+          <button
+            key={u.id}
+            onClick={() => setSelectedUser({ id: u.id, name: u.name, email: u.email, role: u.role })}
+            className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-white/8 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition text-left group"
+          >
+            <div
+              className="h-9 w-9 rounded-full grid place-items-center text-white text-[12px] font-semibold shrink-0"
+              style={{ background: "linear-gradient(135deg, hsl(235 70% 58%), hsl(280 60% 40%))" }}
+            >
+              {getInitials(u.name)}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[13px] font-semibold dark:text-white truncate">{u.name}</div>
+              <div className="text-[11.5px] text-gray-500 dark:text-gray-400 truncate">{u.email}</div>
+            </div>
+            <Tag tone={u.role === 'admin' ? 'brand' : 'neutral'}>{u.role}</Tag>
+            <ChevronRightIcon className="h-4 w-4 text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-400 shrink-0 transition" />
+          </button>
+        ))
+      )}
     </div>
   )
 }

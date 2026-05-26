@@ -3,13 +3,20 @@
 import { ActivityIcon } from "lucide-react"
 import { PageHeader, Tag } from "@/components/meridian/primitives"
 import { useDashboardNav } from "@/contexts/dashboard-nav"
-import { useAdminUserData, NoStudentSelected, StudentPageHeader, PageSkeleton, Section } from "./admin-shared"
+import { useAdminUserData, InlineStudentPicker, StudentPageHeader, PageSkeleton, Section } from "./admin-shared"
 
 export function AdminActivityPage() {
   const { selectedUser } = useDashboardNav()
   const { data, isLoading, refetch } = useAdminUserData(selectedUser?.id)
 
-  if (!selectedUser) return <NoStudentSelected message="Select a student to view their activity log." />
+  if (!selectedUser) {
+    return (
+      <>
+        <PageHeader eyebrow="Admin · Activity" title="Activity log." subtitle="Select a student to view their account activity and history." />
+        <InlineStudentPicker hint="Click a student to view their activity log and transaction history." />
+      </>
+    )
+  }
 
   const activity = data?.activity ?? []
   const txns     = data?.transactions ?? []

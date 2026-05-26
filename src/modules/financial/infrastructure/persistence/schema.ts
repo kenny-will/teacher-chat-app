@@ -72,11 +72,16 @@ export const userAccountsTable = pgTable(
     name: varchar('name', { length: 255 }).notNull(),
     lastFour: varchar('last_four', { length: 10 }).notNull(),
     bankName: varchar('bank_name', { length: 255 }).notNull(),
-    balance: varchar('balance', { length: 50 }).notNull().default('$0.00'),
+    // Stored as numeric string without symbol, e.g. "398420.11"
+    balance: varchar('balance', { length: 50 }).notNull().default('0.00'),
     currency: varchar('currency', { length: 10 }).notNull().default('USD'),
     status: accountStatusEnum('status').notNull().default('active'),
     sortOrder: integer('sort_order').notNull().default(0),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    // Extended fields
+    apy: numeric('apy', { precision: 8, scale: 4 }).default('0'),
+    routing: varchar('routing', { length: 100 }),
+    accountType: varchar('account_type', { length: 20 }).notNull().default('bank'),
   },
   (table) => [index('user_accounts_user_idx').on(table.userId)],
 )

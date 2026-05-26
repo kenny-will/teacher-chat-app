@@ -21,6 +21,7 @@ export type UserView =
 export type AdminView =
   | "overview"
   | "users"
+  | "accounts"
   | "transactions"
   | "deposits"
   | "withdrawals"

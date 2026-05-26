@@ -85,6 +85,12 @@ export async function adminClearUserData(userId: string): Promise<void> {
   await repo.clearUserFinancialData(userId)
 }
 
+/** Admin: get all transactions across all users (with user name/email joined). */
+export async function adminGetAllTransactions() {
+  await requireAdmin()
+  return repo.getAllTransactionsWithUsers()
+}
+
 /** Admin: get all users (for user management panel). */
 export async function adminGetUsers() {
   await requireAdmin()
@@ -152,6 +158,67 @@ export async function adminInjectWithdrawal(
     sortOrder: -1,
   })
   await repo.adjustBalanceForTransaction(userId, numeric, 'outbound')
+}
+
+/** Admin: create an account for a user. */
+export async function adminCreateAccount(
+  userId: string,
+  params: {
+    name: string
+    lastFour: string
+    bankName: string
+    currency: string
+    accountType: string
+    routing?: string
+    apy?: string
+    status?: 'active' | 'earning' | 'pending'
+  },
+): Promise<void> {
+  await requireAdmin()
+  await repo.insertAccount({
+    userId,
+    name: params.name,
+    lastFour: params.lastFour,
+    bankName: params.bankName,
+    currency: params.currency,
+    accountType: params.accountType,
+    routing: params.routing ?? null,
+    apy: params.apy ?? '0',
+    status: params.status ?? 'active',
+    balance: '0.00',
+    sortOrder: 999,
+  })
+}
+
+/** Admin: adjust an account balance (add or subtract amount). */
+export async function adminAdjustAccountBalance(
+  accountId: string,
+  amount: number,
+  direction: 'add' | 'subtract',
+): Promise<void> {
+  await requireAdmin()
+  await repo.adjustAccountBalance(accountId, amount, direction)
+}
+
+/** Admin: update account metadata fields. */
+export async function adminUpdateAccount(
+  accountId: string,
+  params: {
+    name?: string
+    bankName?: string
+    routing?: string
+    apy?: string
+    status?: 'active' | 'earning' | 'pending'
+  },
+): Promise<void> {
+  await requireAdmin()
+  await repo.updateAccount(accountId, params)
+}
+
+/** Admin: delete an account. */
+export async function adminDeleteAccount(accountId: string): Promise<void> {
+  await requireAdmin()
+  await repo.deleteAccount(accountId)
 }
 
 /** Admin: approve a transaction (set status → Approved). */

@@ -123,66 +123,9 @@ export function CardsPage() {
       />
 
       <div className="grid grid-cols-12 gap-4">
-        {/* ── KPI strip ── */}
-        {statsLoading ? (
-          [0,1,2,3].map((i) => (
-            <div key={i} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-4 animate-pulse">
-              <div className="h-4 bg-gray-100 dark:bg-white/10 rounded w-28 mb-2" />
-              <div className="h-8 bg-gray-100 dark:bg-white/10 rounded w-32" />
-            </div>
-          ))
-        ) : stats ? (
-          <>
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-              <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Card spend · MTD</div>
-              <div className="font-semibold text-[32px] leading-none tracking-tight mt-1">
-                ${parseFloat(stats.cardSpendMtd).toLocaleString()}
-              </div>
-              <div className="mt-1 text-[12px] flex items-center gap-1.5">
-                <Delta value={parseFloat(stats.cardSpendDelta)} />
-                <span className="text-gray-500 dark:text-gray-400">vs last month</span>
-              </div>
-              <div className="mt-3 h-8">
-                {stats.cardSpendSparkData && <Sparkline data={stats.cardSpendSparkData} height={32} />}
-              </div>
-            </div>
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-              <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Rebate earned · YTD</div>
-              <div className="font-semibold text-[32px] leading-none tracking-tight mt-1">
-                ${parseFloat(stats.rebateEarnedYtd).toLocaleString()}
-              </div>
-              <div className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">
-                {parseFloat(stats.rebatePercent).toFixed(1)}% on qualifying spend
-              </div>
-              <ProgressBar value={Math.round((parseFloat(stats.rebateClearedAmount) / parseFloat(stats.rebateEarnedYtd)) * 100)} className="mt-4" />
-              <div className="mt-1 text-[10.5px] text-gray-500 dark:text-gray-400">
-                ${(parseFloat(stats.rebateClearedAmount)/1000).toFixed(1)}k cleared · ${(parseFloat(stats.rebatePendingAmount)/1000).toFixed(0)}k pending
-              </div>
-            </div>
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-              <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Top merchant</div>
-              <div className="font-semibold text-[24px] leading-tight tracking-tight mt-1">{stats.topMerchantName ?? "—"}</div>
-              <div className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">{stats.topMerchantAmount} · {stats.topMerchantCharges} charges</div>
-              <div className="mt-3 flex items-center gap-2"><Tag tone="brand">Cloud</Tag><Tag tone="neutral">Infrastructure</Tag></div>
-            </div>
-            <div className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-              <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Declined this month</div>
-              <div className="font-semibold text-[32px] leading-none tracking-tight mt-1">{stats.declinedThisMonth}</div>
-              <div className="mt-1 text-[12px] text-gray-500 dark:text-gray-400">{stats.declinedByPolicy} by policy · {stats.declinedByNetwork} by network</div>
-              <button className="mt-3 text-[12px] text-blue-600 dark:text-blue-400 font-medium">Review declines</button>
-            </div>
-          </>
-        ) : (
-          ["Card spend · MTD","Rebate earned · YTD","Top merchant","Declined this month"].map((label) => (
-            <div key={label} className="col-span-12 sm:col-span-6 lg:col-span-3 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-4">
-              <div className="text-[11.5px] text-gray-500 dark:text-gray-400">{label}</div>
-              <div className="font-semibold text-[32px] leading-none tracking-tight mt-1 text-gray-200 dark:text-white/10">—</div>
-            </div>
-          ))
-        )}
-
+  
         {/* ── Card viewer (left) + details (right) ── */}
-        <div className="col-span-12 lg:col-span-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
+        <div className="col-span-12 lg:col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
           <SectionHeader
             title="My cards"
             subtitle="Click a card below to switch"
@@ -314,35 +257,6 @@ export function CardsPage() {
               )
             })}
           </div>
-        </div>
-
-        {/* ── Spend by category ── */}
-        <div className="col-span-12 lg:col-span-4 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
-          <SectionHeader title="Spend by category" subtitle="This month" />
-          {catsLoading ? (
-            <div className="mt-4 h-36 bg-gray-100 dark:bg-white/10 rounded animate-pulse" />
-          ) : !spendCats?.length ? (
-            <div className="mt-8 text-center text-[12px] text-gray-400">No spend data</div>
-          ) : (
-            <div className="mt-3 flex items-center gap-4">
-              <div className="shrink-0">
-                <DonutChart
-                  data={spendCats.map((c) => ({ label: c.label, value: c.percentage, color: c.color }))}
-                  size={140}
-                  thickness={14}
-                />
-              </div>
-              <div className="flex-1 space-y-1.5 text-[12px] min-w-0">
-                {spendCats.map((c) => (
-                  <div key={c.id} className="flex items-center gap-2">
-                    <span className="h-2.5 w-2.5 rounded-sm shrink-0" style={{ background: c.color }} />
-                    <span className="flex-1 truncate">{c.label}</span>
-                    <span className="tabular-nums shrink-0">{c.amountDisplay}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* ── Recent card transactions ── */}

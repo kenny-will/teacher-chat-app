@@ -4,13 +4,20 @@ import { CreditCardIcon } from "lucide-react"
 import { PageHeader, Tag, SectionHeader } from "@/components/meridian/primitives"
 import { useDashboardNav } from "@/contexts/dashboard-nav"
 import { cn } from "@/lib/utils"
-import { useAdminUserData, NoStudentSelected, StudentPageHeader, PageSkeleton, Section, DataRow } from "./admin-shared"
+import { useAdminUserData, InlineStudentPicker, StudentPageHeader, PageSkeleton, Section, DataRow } from "./admin-shared"
 
 export function AdminCardsPage() {
   const { selectedUser } = useDashboardNav()
   const { data, isLoading, refetch } = useAdminUserData(selectedUser?.id)
 
-  if (!selectedUser) return <NoStudentSelected message="Select a student to view their cards." />
+  if (!selectedUser) {
+    return (
+      <>
+        <PageHeader eyebrow="Admin · Cards" title="Cards & Spend." subtitle="Select a student to view their card program." />
+        <InlineStudentPicker hint="Click a student below to view their cards and spending data." />
+      </>
+    )
+  }
 
   const cards     = data?.cards ?? []
   const stats     = data?.cardStats
@@ -79,20 +86,7 @@ export function AdminCardsPage() {
               )}
             </div>
 
-            {/* Spend categories */}
-            {catCards.length > 0 && (
-              <Section title="Spend by category">
-                {catCards.map((s) => (
-                  <div key={s.id} className="py-2 border-b border-gray-100 dark:border-white/8 last:border-0 flex items-center justify-between text-[12.5px]">
-                    <div className="flex items-center gap-2">
-                      <span className="h-3 w-3 rounded-sm shrink-0" style={{ background: s.color }} />
-                      <span>{s.label}</span>
-                    </div>
-                    <span className="tabular-nums text-gray-600 dark:text-gray-300">{s.amountDisplay} ({s.percentage}%)</span>
-                  </div>
-                ))}
-              </Section>
-            )}
+           
           </div>
 
           {/* Card program stats */}

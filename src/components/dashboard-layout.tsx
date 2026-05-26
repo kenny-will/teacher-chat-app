@@ -37,6 +37,7 @@ import { AdminNotificationsPage } from "@/components/admin/admin-notifications";
 import { AdminAuditLogPage } from "@/components/admin/audit-log";
 import { AdminChatPage } from "@/components/admin/admin-chat";
 import { AdminLocationsPage } from "@/components/admin/admin-locations";
+import { AdminAccountsPage } from "@/components/admin/admin-accounts";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LocationTracker } from "@/components/chat/location-tracker";
 
@@ -60,6 +61,7 @@ const USER_PAGES: Record<string, React.ComponentType> = {
 const ADMIN_PAGES: Record<string, React.ComponentType> = {
   overview: AdminOverviewPage,
   users: AdminStudentPickerPage,
+  accounts: AdminAccountsPage,
   transactions: AdminUserTransactionsPage,
   deposits: AdminDepositsPage,
   withdrawals: AdminWithdrawalsPage,

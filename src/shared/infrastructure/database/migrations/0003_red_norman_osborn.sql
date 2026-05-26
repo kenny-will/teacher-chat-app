@@ -1,0 +1,4 @@
+ALTER TABLE "user_accounts" ALTER COLUMN "balance" SET DEFAULT '0.00';--> statement-breakpoint
+ALTER TABLE "user_accounts" ADD COLUMN "apy" numeric(8, 4) DEFAULT '0';--> statement-breakpoint
+ALTER TABLE "user_accounts" ADD COLUMN "routing" varchar(100);--> statement-breakpoint
+ALTER TABLE "user_accounts" ADD COLUMN "account_type" varchar(20) DEFAULT 'bank' NOT NULL;
