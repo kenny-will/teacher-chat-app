@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1779554998831,
+      "tag": "0000_tiny_iron_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1779564011596,
+      "tag": "0001_marvelous_human_cannonball",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779653282615,
+      "tag": "0002_true_ultimates",
+      "breakpoints": true
+    }
+  ]
+}
