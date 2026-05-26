@@ -7,18 +7,10 @@ import { AreaChart } from "@/components/meridian/charts"
 import { Tag, PageHeader, SectionHeader, Divider, ProgressBar } from "@/components/meridian/primitives"
 import { useServerData } from "@/hooks/use-server-data"
 import { queryAccounts, queryBalanceOverview } from "@/modules/financial/application/queries/financial.queries"
+import { useCryptoPrices, type CryptoPrices } from "@/hooks/use-crypto-prices"
+import { CRYPTO_SYMBOLS, CURRENCY_FLAGS, FX_RATES } from "@/lib/crypto-config"
 
 type Account = Awaited<ReturnType<typeof queryAccounts>>[number]
-
-const CRYPTO_SYMBOLS = new Set(["BTC", "ETH", "TRX", "USDT", "USDC", "SOL", "BNB"])
-const CRYPTO_USD_RATES: Record<string, number> = {
-  BTC: 70000, ETH: 3500, TRX: 0.152, USDT: 1, USDC: 1, SOL: 180, BNB: 600,
-}
-
-const CURRENCY_FLAGS: Record<string, string> = {
-  USD: "🇺🇸", EUR: "🇪🇺", GBP: "🇬🇧", SGD: "🇸🇬", JPY: "🇯🇵", AUD: "🇦🇺",
-  BTC: "₿", ETH: "Ξ", TRX: "♦", USDT: "₮", USDC: "₵", SOL: "◎",
-}
 
 const STATUS_TONE = { active: "green", earning: "brand", pending: "amber" } as const
 
@@ -30,22 +22,19 @@ function fmtBalance(account: Account): string {
   return `${account.currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function toUSD(account: Account): number {
+function toUSD(account: Account, prices: CryptoPrices): number {
   const n = parseFloat(account.balance) || 0
   if (CRYPTO_SYMBOLS.has(account.currency)) {
-    return n * (CRYPTO_USD_RATES[account.currency] ?? 0)
+    return n * (prices[account.currency] ?? 0)
   }
-  // Approximate FX rates for demo
-  const FX: Record<string, number> = { USD: 1, EUR: 1.08, GBP: 1.27, SGD: 0.74 }
-  return n * (FX[account.currency] ?? 1)
+  return n * (FX_RATES[account.currency] ?? 1)
 }
 
-function buildFxBars(accounts: Account[]) {
+function buildFxBars(accounts: Account[], prices: CryptoPrices) {
   const totals: Record<string, number> = {}
   for (const a of accounts) {
-    const usd = toUSD(a)
-    const group = CRYPTO_SYMBOLS.has(a.currency) ? a.currency : a.currency
-    totals[group] = (totals[group] ?? 0) + usd
+    const usd = toUSD(a, prices)
+    totals[a.currency] = (totals[a.currency] ?? 0) + usd
   }
   const grandTotal = Object.values(totals).reduce((s, v) => s + v, 0) || 1
   const COLORS = ["#2A5CFF", "#0A0C12", "#85A8FF", "#B7CCFF", "#DDE1E7", "#10B981", "#F59E0B"]
@@ -63,13 +52,14 @@ function buildFxBars(accounts: Account[]) {
 export function AccountsPage() {
   const { data: accounts, isLoading: accsLoading, refetch } = useServerData(() => queryAccounts(), [])
   const { data: balance, isLoading: balLoading } = useServerData(() => queryBalanceOverview(), [])
+  const { prices, changes } = useCryptoPrices()
   const [chartPeriod, setChartPeriod] = useState<"1W" | "1M" | "3M">("1M")
 
   const isLoading = accsLoading || balLoading
   const allAccounts = accounts ?? []
 
-  const combinedUsd = allAccounts.reduce((s, a) => s + toUSD(a), 0)
-  const fxBars = buildFxBars(allAccounts)
+  const combinedUsd = allAccounts.reduce((s, a) => s + toUSD(a, prices), 0)
+  const fxBars = buildFxBars(allAccounts, prices)
 
   const chartData = balance?.balanceChartData?.[chartPeriod] ?? []
   const apy = balance?.yieldApy ? parseFloat(balance.yieldApy) : 0
@@ -200,8 +190,11 @@ export function AccountsPage() {
             </div>
           ) : (
             allAccounts.map((a) => {
-              const apyVal = parseFloat(a.apy ?? "0")
+              const apyVal   = parseFloat(a.apy ?? "0")
               const isCrypto = CRYPTO_SYMBOLS.has(a.currency)
+              const livePrice  = isCrypto ? prices[a.currency] : null
+              const change24h  = isCrypto ? (changes[a.currency] ?? 0) : 0
+              const changeUp   = change24h >= 0
               return (
                 <div
                   key={a.id}
@@ -224,8 +217,18 @@ export function AccountsPage() {
                   <div className="col-span-2 text-gray-500 dark:text-gray-400 font-mono text-[11px] truncate">
                     {a.routing ?? "—"}
                   </div>
-                  <div className="col-span-2 text-right tabular-nums font-semibold dark:text-white">
-                    {fmtBalance(a)}
+                  <div className="col-span-2 text-right">
+                    <div className="tabular-nums font-semibold dark:text-white">{fmtBalance(a)}</div>
+                    {isCrypto && livePrice != null && (
+                      <div className="flex items-center justify-end gap-1 mt-0.5">
+                        <span className="text-[10.5px] text-gray-400 dark:text-gray-500 tabular-nums">
+                          ${livePrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: livePrice < 1 ? 6 : 2 })}
+                        </span>
+                        <span className={`text-[10px] font-medium tabular-nums ${changeUp ? "text-emerald-500" : "text-rose-500"}`}>
+                          {changeUp ? "▲" : "▼"}{Math.abs(change24h).toFixed(2)}%
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="col-span-1 text-right tabular-nums text-gray-600 dark:text-gray-400">
                     {apyVal > 0 ? `${apyVal.toFixed(2)}%` : "—"}

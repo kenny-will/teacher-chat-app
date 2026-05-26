@@ -26,6 +26,8 @@ import {
   queryActivityLogs,
   queryKpiEntries,
 } from "@/modules/financial/application/queries/financial.queries"
+import { useCryptoPrices } from "@/hooks/use-crypto-prices"
+import { CRYPTO_SYMBOLS, CRYPTO_META } from "@/lib/crypto-config"
 
 // ─── Utility hooks ────────────────────────────────────────────────
 
@@ -72,19 +74,7 @@ const FALLBACK_BALANCE = {
   lastRebalancedAt: "2026-05-20",
 }
 
-// ─── Crypto helpers ───────────────────────────────────────────────
-
-const CRYPTO_SYMBOLS = new Set(["BTC", "ETH", "TRX", "USDT", "USDC", "SOL", "BNB"])
-const CRYPTO_USD_RATES: Record<string, number> = { BTC: 70000, ETH: 3500, TRX: 0.152, USDT: 1, USDC: 1, SOL: 145, BNB: 380 }
-const CRYPTO_META: Record<string, { name: string; badge: string; color: string }> = {
-  BTC:  { name: "Bitcoin",  badge: "₿", color: "bg-orange-500" },
-  ETH:  { name: "Ethereum", badge: "Ξ", color: "bg-indigo-500" },
-  TRX:  { name: "Tron",     badge: "T", color: "bg-red-500"    },
-  USDT: { name: "Tether",   badge: "₮", color: "bg-teal-500"  },
-  USDC: { name: "USD Coin", badge: "₵", color: "bg-blue-500"  },
-  SOL:  { name: "Solana",   badge: "◎", color: "bg-purple-500" },
-  BNB:  { name: "BNB",      badge: "B", color: "bg-yellow-500" },
-}
+// CRYPTO_SYMBOLS and CRYPTO_META are imported from @/lib/crypto-config
 
 // ─── Page nav static config (stats filled at runtime) ─────────────
 
@@ -673,13 +663,13 @@ function DepositWithdrawalPreview() {
 // ─── CryptoBalances ───────────────────────────────────────────────
 
 function CryptoBalances() {
-  const { setView }               = useDashboardNav()
-  const { data: accounts, isLoading } = useServerData(queryAccounts)
+  const { setView }                    = useDashboardNav()
+  const { data: accounts, isLoading }  = useServerData(queryAccounts)
+  const { prices, changes }            = useCryptoPrices()
 
   const cryptoAccounts = (accounts ?? []).filter((a) => CRYPTO_SYMBOLS.has(a.currency))
   const totalUsd = cryptoAccounts.reduce((sum, a) => {
-    const rate = CRYPTO_USD_RATES[a.currency] ?? 0
-    return sum + parseFloat(a.balance) * rate
+    return sum + parseFloat(a.balance) * (prices[a.currency] ?? 0)
   }, 0)
 
   return (
@@ -699,24 +689,33 @@ function CryptoBalances() {
         ) : !cryptoAccounts.length ? (
           <div className="py-8 text-center text-[12px] text-gray-400">No crypto accounts yet.</div>
         ) : cryptoAccounts.map((a) => {
-          const meta   = CRYPTO_META[a.currency] ?? { name: a.currency, badge: a.currency[0], color: "bg-gray-500" }
-          const rate   = CRYPTO_USD_RATES[a.currency] ?? 0
-          const usdVal = parseFloat(a.balance) * rate
-          const balFmt = `${parseFloat(a.balance).toLocaleString()} ${a.currency}`
+          const meta     = CRYPTO_META[a.currency] ?? { name: a.currency, badge: a.currency[0], color: "bg-gray-500" }
+          const rate     = prices[a.currency] ?? 0
+          const change   = changes[a.currency] ?? 0
+          const changeUp = change >= 0
+          const usdVal   = parseFloat(a.balance) * rate
+          const balFmt   = `${parseFloat(a.balance).toLocaleString()} ${a.currency}`
           return (
             <div key={a.id} className="flex items-center gap-3">
               <span className={cn("h-8 w-8 rounded-full flex items-center justify-center text-white font-bold text-[13px] shrink-0", meta.color)}>
                 {meta.badge}
               </span>
               <div className="flex-1 min-w-0">
-                <div className="text-[12.5px] font-medium">{meta.name}</div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[12.5px] font-medium">{meta.name}</span>
+                  <span className={`text-[10px] font-medium tabular-nums ${changeUp ? "text-emerald-500" : "text-rose-500"}`}>
+                    {changeUp ? "▲" : "▼"}{Math.abs(change).toFixed(2)}%
+                  </span>
+                </div>
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono">{balFmt}</div>
               </div>
               <div className="text-right shrink-0">
                 <div className="text-[13px] font-semibold tabular-nums">
                   ${usdVal.toLocaleString("en-US", { maximumFractionDigits: 0 })}
                 </div>
-                <div className="text-[10.5px] text-gray-400 dark:text-gray-500">≈ USD</div>
+                <div className="text-[10.5px] text-gray-400 dark:text-gray-500 tabular-nums">
+                  @ ${rate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: rate < 1 ? 6 : 2 })}
+                </div>
               </div>
             </div>
           )

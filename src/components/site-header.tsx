@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import { BellIcon, LogOutIcon, SearchIcon, SendIcon, Settings2Icon } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { useDashboardNav } from "@/contexts/dashboard-nav"
-import { useAuthOptional } from "@/contexts/auth-context"
-import { useRouter } from "next/navigation"
-import { LanguageSwitcher } from "@/components/google-translate"
+import {
+  BellIcon,
+  LogOutIcon,
+  SearchIcon,
+  SendIcon,
+  Settings2Icon,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import { useDashboardNav } from "@/contexts/dashboard-nav";
+import { useAuthOptional } from "@/contexts/auth-context";
+import { useRouter } from "next/navigation";
+import { LanguageSwitcher } from "@/components/google-translate";
 
 const USER_BREADCRUMBS: Record<string, string[]> = {
   overview: ["Northwind Inc.", "Workspace", "Overview"],
@@ -21,7 +27,7 @@ const USER_BREADCRUMBS: Record<string, string[]> = {
   team: ["Northwind Inc.", "Workspace", "Team"],
   integrations: ["Northwind Inc.", "Workspace", "Integrations"],
   settings: ["Northwind Inc.", "Workspace", "Settings"],
-}
+};
 
 const ADMIN_BREADCRUMBS: Record<string, string[]> = {
   overview: ["Meridian", "Console", "Overview"],
@@ -34,23 +40,23 @@ const ADMIN_BREADCRUMBS: Record<string, string[]> = {
   support: ["Meridian", "CX", "Support"],
   audit: ["Meridian", "Security", "Audit Log"],
   billing: ["Meridian", "Finance", "Billing"],
-}
+};
 
 export function SiteHeader() {
-  const { mode, view } = useDashboardNav()
-  const user = useAuthOptional()
-  const router = useRouter()
+  const { mode, view } = useDashboardNav();
+  const user = useAuthOptional();
+  const router = useRouter();
 
   async function handleLogout() {
-    await fetch('/api/auth/logout', { method: 'POST' })
-    router.push('/login')
-    router.refresh()
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/login");
+    router.refresh();
   }
 
   const crumbs =
     mode === "user"
       ? (USER_BREADCRUMBS[view] ?? USER_BREADCRUMBS.overview)
-      : (ADMIN_BREADCRUMBS[view] ?? ADMIN_BREADCRUMBS.overview)
+      : (ADMIN_BREADCRUMBS[view] ?? ADMIN_BREADCRUMBS.overview);
 
   return (
     <header className="flex h-(--header-height) shrink-0 items-center gap-2 border-b border-gray-200 dark:border-white/10 bg-white dark:bg-gray-950 transition-[width,height] ease-linear">
@@ -97,31 +103,8 @@ export function SiteHeader() {
 
         {/* Right actions */}
         <div className="ml-auto flex items-center gap-2">
-          {/* Search */}
-          <div className="hidden md:flex items-center gap-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-3 h-9 w-70">
-            <SearchIcon className="h-4 w-4 text-gray-400 dark:text-gray-500 shrink-0" />
-            <input
-              className="flex-1 bg-transparent text-[13px] text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none"
-              placeholder="Search transactions, vendors…"
-            />
-            <kbd className="hidden lg:inline-flex h-5 items-center rounded border border-gray-200 dark:border-white/10 px-1.5 text-[10px] text-gray-500 dark:text-gray-500">
-              ⌘K
-            </kbd>
-          </div>
-
           {/* Language */}
           <LanguageSwitcher variant="dashboard" />
-
-          {/* Notifications */}
-          <button className="relative h-9 w-9 grid place-items-center rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/8 transition">
-            <BellIcon className="h-4 w-4" />
-            <span className="absolute top-2 right-2 h-1.5 w-1.5 rounded-full bg-blue-500" />
-          </button>
-
-          {/* Settings */}
-          <button className="h-9 w-9 grid place-items-center rounded-lg border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/8 transition">
-            <Settings2Icon className="h-4 w-4" />
-          </button>
 
           {/* CTA */}
           {mode === "user" && (
@@ -147,8 +130,12 @@ export function SiteHeader() {
                 </div>
               )}
               <div className="hidden lg:block text-left">
-                <p className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-none">{user.name}</p>
-                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 capitalize">{user.role}</p>
+                <p className="text-xs font-medium text-gray-900 dark:text-gray-100 leading-none">
+                  {user.name}
+                </p>
+                <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-0.5 capitalize">
+                  {user.role}
+                </p>
               </div>
               <button
                 onClick={handleLogout}
@@ -162,5 +149,5 @@ export function SiteHeader() {
         </div>
       </div>
     </header>
-  )
+  );
 }

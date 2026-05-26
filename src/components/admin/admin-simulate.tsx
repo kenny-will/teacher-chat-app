@@ -1,16 +1,26 @@
 "use client"
 
 import { useState } from "react"
-import { ArrowDownLeftIcon, ArrowUpRightIcon, FlaskConicalIcon, SendIcon } from "lucide-react"
+import {
+  ArrowDownLeftIcon,
+  ArrowUpRightIcon,
+  FlaskConicalIcon,
+  SendIcon,
+  XIcon,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader, SectionHeader, Tag } from "@/components/meridian/primitives"
 import { useDashboardNav } from "@/contexts/dashboard-nav"
+import { useServerData } from "@/hooks/use-server-data"
 import { cn } from "@/lib/utils"
 import {
+  adminGetUsers,
   adminInjectDeposit,
   adminInjectWithdrawal,
 } from "@/modules/financial/application/mutations/financial.mutations"
-import { NoStudentSelected, Feedback } from "./admin-shared"
+import { Feedback } from "./admin-shared"
+
+// ─── Constants ────────────────────────────────────────────────────
 
 const DEPOSIT_RAILS  = ["ACH", "Wire", "RTP / FedNow", "Check", "BTC", "ETH", "TRX", "USDT (TRC-20)", "USDT (ERC-20)"]
 const WITHDRAW_RAILS = ["ACH", "Wire", "RTP / FedNow", "BTC", "ETH", "TRX", "USDT (TRC-20)", "USDT (ERC-20)"]
@@ -27,6 +37,13 @@ const QUICK_SCENARIOS = [
   { type: "withdrawal" as const, label: "BTC · $12,000",        rail: "BTC",           amount: "12000",  desc: "", recipient: "bc1qxy2k…gfp2", memo: "BTC withdrawal" },
 ]
 
+// ─── Helpers ──────────────────────────────────────────────────────
+
+function getInitials(name: string) {
+  const p = name.trim().split(/\s+/)
+  return p.length >= 2 ? (p[0][0] + p[p.length - 1][0]).toUpperCase() : name.slice(0, 2).toUpperCase()
+}
+
 function FormField({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={className}>
@@ -36,18 +53,26 @@ function FormField({ label, children, className }: { label: string; children: Re
   )
 }
 
-export function AdminSimulatePage() {
-  const { selectedUser, setView } = useDashboardNav()
-  const [type, setType]           = useState<"deposit" | "withdrawal">("deposit")
-  const [amount, setAmount]       = useState("")
-  const [rail, setRail]           = useState(DEPOSIT_RAILS[0])
+type RawUser = Awaited<ReturnType<typeof adminGetUsers>>[number]
+
+// ─── Per-student inject panel ─────────────────────────────────────
+
+function InjectPanel({
+  user,
+  onClose,
+}: {
+  user: RawUser
+  onClose: () => void
+}) {
+  const { setView }           = useDashboardNav()
+  const [type, setType]       = useState<"deposit" | "withdrawal">("deposit")
+  const [amount, setAmount]   = useState("")
+  const [rail, setRail]       = useState(DEPOSIT_RAILS[0])
   const [description, setDesc]    = useState("")
   const [recipient, setRecipient] = useState("")
   const [memo, setMemo]           = useState("")
   const [busy, setBusy]           = useState(false)
   const [feedback, setFeedback]   = useState<string | null>(null)
-
-  if (!selectedUser) return <NoStudentSelected message="Select a student to simulate transactions for their account." />
 
   const rails = type === "deposit" ? DEPOSIT_RAILS : WITHDRAW_RAILS
 
@@ -66,28 +91,27 @@ export function AdminSimulatePage() {
   }
 
   async function handleInject() {
-    if (!selectedUser) return
     const amt = parseFloat(amount)
     if (!amt || amt <= 0) { flash("Error: Enter a valid amount."); return }
     setBusy(true)
     try {
       if (type === "deposit") {
-        await adminInjectDeposit(selectedUser.id, {
+        await adminInjectDeposit(user.id, {
           amount,
           rail,
           description: description || `${rail} Deposit`,
           reference: "",
         })
-        flash(`Deposit of $${amt.toLocaleString()} injected as Pending for ${selectedUser.name}. Go to Deposits to approve it.`)
+        flash(`Deposit of $${amt.toLocaleString()} injected as Pending for ${user.name}.`)
         setTimeout(() => setView("deposits"), 1800)
       } else {
-        await adminInjectWithdrawal(selectedUser.id, {
+        await adminInjectWithdrawal(user.id, {
           amount,
           rail,
           recipient: recipient || `${rail} Withdrawal`,
           memo,
         })
-        flash(`Withdrawal of $${amt.toLocaleString()} injected as Pending for ${selectedUser.name}. Go to Withdrawals to approve/reject.`)
+        flash(`Withdrawal of $${amt.toLocaleString()} injected as Pending for ${user.name}.`)
         setTimeout(() => setView("withdrawals"), 1800)
       }
       setAmount(""); setDesc(""); setRecipient(""); setMemo("")
@@ -99,47 +123,39 @@ export function AdminSimulatePage() {
   }
 
   return (
-    <>
-      <PageHeader
-        eyebrow="Admin · Simulate"
-        title="Simulate transactions."
-        subtitle={`Inject demo deposits or withdrawals into ${selectedUser.name}'s account`}
-      />
+    <div className="col-span-12 rounded-2xl border border-indigo-200 dark:border-indigo-800/50 bg-white dark:bg-white/5 overflow-hidden">
+      {/* Panel header */}
+      <div className="flex items-center justify-between px-5 py-3.5 border-b border-indigo-100 dark:border-indigo-800/40 bg-indigo-50 dark:bg-indigo-950/30">
+        <div className="flex items-center gap-2.5">
+          <div className="h-7 w-7 rounded-md bg-indigo-600 grid place-items-center text-white text-[11px] font-semibold shrink-0">
+            {getInitials(user.name)}
+          </div>
+          <div>
+            <span className="text-[13px] font-semibold text-indigo-900 dark:text-indigo-200">{user.name}</span>
+            <span className="ml-2 text-[11px] text-indigo-500 dark:text-indigo-400">{user.email}</span>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          className="h-7 w-7 rounded-lg grid place-items-center text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition"
+        >
+          <XIcon className="h-4 w-4" />
+        </button>
+      </div>
 
       <Feedback msg={feedback} />
 
-      {/* How it works */}
-      <div className="rounded-2xl border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-950/20 p-5 mb-5">
-        <div className="flex items-start gap-3">
-          <FlaskConicalIcon className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-          <div>
-            <div className="text-[13px] font-semibold text-blue-800 dark:text-blue-300">How the simulation works</div>
-            <ol className="text-[12px] text-blue-700 dark:text-blue-400 mt-1.5 space-y-1 list-decimal list-inside">
-              <li>Choose Deposit or Withdrawal, fill in the form, and click <strong>Inject</strong>.</li>
-              <li>The transaction appears as <strong>Pending</strong> in the student&apos;s account immediately.</li>
-              <li>Navigate to <strong>Deposits</strong> or <strong>Withdrawals</strong> to <strong>Approve</strong>, <strong>Hold</strong>, or <strong>Reject</strong> it.</li>
-              <li>The student sees the status update in real-time — illustrating the full banking lifecycle.</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-12 gap-5">
+      <div className="grid grid-cols-12 gap-5 p-5">
         {/* Inject form */}
-        <div className="col-span-12 lg:col-span-7 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
-          <SectionHeader
-            title={`Inject for ${selectedUser.name}`}
-            subtitle="Creates a Pending transaction on their account"
-          />
-
+        <div className="col-span-12 lg:col-span-7">
           {/* Type toggle */}
-          <div className="flex gap-2 mt-4 mb-5">
+          <div className="flex gap-2 mb-4">
             {(["deposit", "withdrawal"] as const).map((t) => (
               <button
                 key={t}
                 onClick={() => { setType(t); setRail(t === "deposit" ? DEPOSIT_RAILS[0] : WITHDRAW_RAILS[0]) }}
                 className={cn(
-                  "flex items-center gap-2 px-5 h-10 rounded-xl text-[13px] font-semibold transition border-2",
+                  "flex items-center gap-2 px-5 h-9 rounded-xl text-[13px] font-semibold transition border-2",
                   type === t
                     ? t === "deposit"
                       ? "bg-emerald-600 text-white border-emerald-600"
@@ -148,8 +164,8 @@ export function AdminSimulatePage() {
                 )}
               >
                 {t === "deposit"
-                  ? <ArrowDownLeftIcon className="h-4 w-4" />
-                  : <ArrowUpRightIcon className="h-4 w-4" />}
+                  ? <ArrowDownLeftIcon className="h-3.5 w-3.5" />
+                  : <ArrowUpRightIcon className="h-3.5 w-3.5" />}
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
             ))}
@@ -207,10 +223,10 @@ export function AdminSimulatePage() {
             )}
           </div>
 
-          <div className="mt-5 pt-4 border-t border-gray-100 dark:border-white/8 flex items-center justify-between gap-4">
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-white/8 flex items-center justify-between gap-4">
             <p className="text-[11.5px] text-gray-400 dark:text-gray-500">
-              Status will be <strong>Pending</strong>. Approve, hold, or reject it from the{" "}
-              {type === "deposit" ? "Deposits" : "Withdrawals"} tab.
+              Status will be <strong>Pending</strong>. Approve or reject from{" "}
+              {type === "deposit" ? "Deposits" : "Withdrawals"}.
             </p>
             <Button
               size="sm"
@@ -228,22 +244,22 @@ export function AdminSimulatePage() {
         </div>
 
         {/* Quick scenarios */}
-        <div className="col-span-12 lg:col-span-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
-          <SectionHeader title="Quick scenarios" subtitle="Click to pre-fill the form" />
-          <div className="mt-3 space-y-2">
+        <div className="col-span-12 lg:col-span-5">
+          <SectionHeader title="Quick scenarios" subtitle="Click to pre-fill" />
+          <div className="mt-2 space-y-1.5">
             {QUICK_SCENARIOS.map((s) => (
               <button
                 key={s.label}
                 onClick={() => applyScenario(s)}
-                className="w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/8 transition text-left"
+                className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-xl border border-gray-200 dark:border-white/10 hover:bg-gray-50 dark:hover:bg-white/8 transition text-left"
               >
-                <div className="flex items-center gap-2.5">
+                <div className="flex items-center gap-2">
                   {s.type === "deposit"
-                    ? <ArrowDownLeftIcon className="h-4 w-4 text-emerald-500 shrink-0" />
-                    : <ArrowUpRightIcon  className="h-4 w-4 text-violet-500 shrink-0" />}
+                    ? <ArrowDownLeftIcon className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                    : <ArrowUpRightIcon  className="h-3.5 w-3.5 text-violet-500 shrink-0" />}
                   <div>
-                    <div className="text-[12.5px] font-medium">{s.label}</div>
-                    <div className="text-[11px] text-gray-400 dark:text-gray-500">{s.rail}</div>
+                    <div className="text-[12px] font-medium">{s.label}</div>
+                    <div className="text-[10.5px] text-gray-400 dark:text-gray-500">{s.rail}</div>
                   </div>
                 </div>
                 <Tag tone={s.type === "deposit" ? "green" : "brand"}>
@@ -253,6 +269,164 @@ export function AdminSimulatePage() {
             ))}
           </div>
         </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Student row ──────────────────────────────────────────────────
+
+function StudentRow({
+  user,
+  activeAction,
+  onAction,
+}: {
+  user: RawUser
+  activeAction: "deposit" | "withdrawal" | null
+  onAction: (action: "deposit" | "withdrawal" | null) => void
+}) {
+  const initials = getInitials(user.name)
+  const isOpen   = activeAction !== null
+
+  return (
+    <div className={cn(
+      "flex items-center gap-3 px-4 py-3 text-[12.5px] border-b border-gray-100 dark:border-white/8 last:border-0 transition",
+      isOpen ? "bg-indigo-50/50 dark:bg-indigo-950/20" : "hover:bg-gray-50 dark:hover:bg-white/5"
+    )}>
+      {/* Avatar */}
+      <div
+        className="h-8 w-8 rounded-full grid place-items-center text-white text-[11px] font-semibold shrink-0"
+        style={{ background: "linear-gradient(135deg, hsl(235 70% 58%), hsl(280 60% 40%))" }}
+      >
+        {initials}
+      </div>
+
+      {/* Identity */}
+      <div className="flex-1 min-w-0">
+        <div className="font-medium dark:text-white truncate">{user.name}</div>
+        <div className="text-[11px] text-gray-500 dark:text-gray-400 truncate">{user.email}</div>
+      </div>
+
+      {/* Role badge */}
+      <Tag tone={user.role === "admin" ? "brand" : "neutral"} className="shrink-0 capitalize">
+        {user.role}
+      </Tag>
+
+      {/* Action buttons */}
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          onClick={() => onAction(activeAction === "deposit" ? null : "deposit")}
+          className={cn(
+            "flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11.5px] font-medium border transition",
+            activeAction === "deposit"
+              ? "bg-emerald-600 text-white border-emerald-600"
+              : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:border-emerald-400 hover:text-emerald-600 dark:hover:text-emerald-400"
+          )}
+        >
+          <ArrowDownLeftIcon className="h-3 w-3" />
+          Deposit
+        </button>
+        <button
+          onClick={() => onAction(activeAction === "withdrawal" ? null : "withdrawal")}
+          className={cn(
+            "flex items-center gap-1.5 h-7 px-3 rounded-lg text-[11.5px] font-medium border transition",
+            activeAction === "withdrawal"
+              ? "bg-violet-600 text-white border-violet-600"
+              : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-300 hover:border-violet-400 hover:text-violet-600 dark:hover:text-violet-400"
+          )}
+        >
+          <ArrowUpRightIcon className="h-3 w-3" />
+          Withdraw
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Page ─────────────────────────────────────────────────────────
+
+export function AdminSimulatePage() {
+  const { data: users, isLoading } = useServerData(() => adminGetUsers(), [])
+  // activePanel: { userId, action } | null
+  const [activePanel, setActivePanel] = useState<{ userId: string; action: "deposit" | "withdrawal" } | null>(null)
+
+  const students = (users ?? []).filter(u => u.role !== "admin")
+
+  function handleAction(userId: string, action: "deposit" | "withdrawal" | null) {
+    if (!action) { setActivePanel(null); return }
+    // Toggle off if same student+action is already open
+    if (activePanel?.userId === userId && activePanel.action === action) {
+      setActivePanel(null)
+    } else {
+      setActivePanel({ userId, action })
+    }
+  }
+
+  const activeUser = activePanel ? (users ?? []).find(u => u.id === activePanel.userId) ?? null : null
+
+  return (
+    <>
+      <PageHeader
+        eyebrow="Admin · Simulate"
+        title="Simulate transactions."
+        subtitle="Inject demo deposits or withdrawals into any student's account directly from this list."
+      />
+
+      {/* How it works */}
+      <div className="rounded-2xl border border-blue-200 dark:border-blue-800/50 bg-blue-50 dark:bg-blue-950/20 p-4 mb-5 flex items-start gap-3">
+        <FlaskConicalIcon className="h-4.5 w-4.5 text-blue-500 shrink-0 mt-0.5" />
+        <ol className="text-[12px] text-blue-700 dark:text-blue-400 space-y-0.5 list-decimal list-inside">
+          <li>Click <strong>Deposit</strong> or <strong>Withdraw</strong> next to any student to open the inject form.</li>
+          <li>Fill in the amount and rail, then click <strong>Inject</strong>.</li>
+          <li>The transaction appears as <strong>Pending</strong> — go to Deposits or Withdrawals to approve it.</li>
+        </ol>
+      </div>
+
+      <div className="grid grid-cols-12 gap-4">
+        {/* Student list */}
+        <div className="col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-white/10 flex items-center gap-2">
+            <FlaskConicalIcon className="h-4 w-4 text-gray-400" />
+            <span className="text-[13px] font-semibold dark:text-white">
+              {isLoading ? "Loading students…" : `${students.length} student${students.length !== 1 ? "s" : ""}`}
+            </span>
+          </div>
+
+          {/* Column headers */}
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10.5px] uppercase tracking-[0.12em] text-gray-400 border-b border-gray-100 dark:border-white/8">
+            <div className="col-span-5">Student</div>
+            <div className="col-span-2">Role</div>
+            <div className="col-span-5 text-right">Actions</div>
+          </div>
+
+          {isLoading ? (
+            <div className="p-5 space-y-3 animate-pulse">
+              {[0,1,2,3].map(i => <div key={i} className="h-12 bg-gray-100 dark:bg-white/8 rounded-lg" />)}
+            </div>
+          ) : students.length === 0 ? (
+            <div className="py-16 text-center text-[13px] text-gray-400 dark:text-gray-500">
+              No students found.
+            </div>
+          ) : (
+            students.map((u) => (
+              <StudentRow
+                key={u.id}
+                user={u}
+                activeAction={activePanel?.userId === u.id ? activePanel.action : null}
+                onAction={(action) => handleAction(u.id, action)}
+              />
+            ))
+          )}
+        </div>
+
+        {/* Inject panel — appears below the list when an action is selected */}
+        {activeUser && activePanel && (
+          <InjectPanel
+            key={activeUser.id + activePanel.action}
+            user={activeUser}
+            onClose={() => setActivePanel(null)}
+          />
+        )}
       </div>
     </>
   )

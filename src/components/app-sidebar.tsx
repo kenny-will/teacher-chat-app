@@ -26,8 +26,6 @@ import {
   GlobeIcon,
   BarChart3Icon,
   ChevronDownIcon,
-  ChevronRightIcon,
-  UserCircleIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -95,63 +93,6 @@ function roleLabel(role: string): string {
   return labels[role] ?? role;
 }
 
-// ─── Student selector widget ──────────────────────────────────────────────────
-
-function StudentSelector() {
-  const { selectedUser, setView } = useDashboardNav();
-
-  if (!selectedUser) {
-    return (
-      <button
-        onClick={() => setView("users")}
-        className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg border border-dashed border-gray-300 dark:border-white/20 hover:border-gray-400 dark:hover:border-white/30 hover:bg-gray-50 dark:hover:bg-white/5 transition group"
-      >
-        <div className="h-7 w-7 rounded-md border border-dashed border-gray-300 dark:border-white/20 grid place-items-center shrink-0 group-hover:border-gray-400 dark:group-hover:border-white/30">
-          <UserCircleIcon className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-        </div>
-        <div className="flex-1 text-left">
-          <div className="text-[11.5px] font-medium text-gray-400 dark:text-gray-500">
-            No student selected
-          </div>
-          <div className="text-[10.5px] text-gray-400 dark:text-gray-600">
-            Click to choose a student
-          </div>
-        </div>
-        <ChevronRightIcon className="h-3.5 w-3.5 text-gray-300 dark:text-gray-600 shrink-0" />
-      </button>
-    );
-  }
-
-  const initials = getInitials(selectedUser.name);
-
-  return (
-    <div className="rounded-lg border border-indigo-200 dark:border-indigo-800/60 bg-indigo-50 dark:bg-indigo-950/30 p-2">
-      <div className="text-[10px] uppercase tracking-[0.14em] text-indigo-400 dark:text-indigo-500 px-1 mb-1.5">
-        Active student
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="h-7 w-7 rounded-md bg-indigo-600 text-white grid place-items-center text-[11px] font-semibold shrink-0">
-          {initials}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[12px] font-semibold text-indigo-900 dark:text-indigo-200 truncate leading-tight">
-            {selectedUser.name}
-          </div>
-          <div className="text-[10.5px] text-indigo-500 dark:text-indigo-400 capitalize truncate">
-            {selectedUser.role}
-          </div>
-        </div>
-        <button
-          onClick={() => setView("users")}
-          className="text-[10.5px] text-indigo-500 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-200 shrink-0 border border-indigo-300 dark:border-indigo-700 rounded-md px-1.5 py-0.5 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition"
-        >
-          Switch
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -216,10 +157,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         )}
 
-        {/* Admin mode: operator console + student selector */}
+        {/* Admin mode: operator console banner */}
         {mode === "admin" && (
-          <div className="px-1 pb-1 space-y-2">
-            {/* Operator banner */}
+          <div className="px-1 pb-1">
             <div className="w-full flex items-center gap-2.5 px-2 py-2 rounded-lg bg-gray-900 dark:bg-white/10 dark:border dark:border-white/10 text-white">
               <div className="h-7 w-7 rounded-md bg-indigo-500 grid place-items-center text-[11px] font-semibold shrink-0">
                 {initials}
@@ -234,9 +174,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </div>
               <ShieldIcon className="h-3.5 w-3.5 text-white/70 shrink-0" />
             </div>
-
-            {/* Student selector */}
-            <StudentSelector />
           </div>
         )}
       </SidebarHeader>

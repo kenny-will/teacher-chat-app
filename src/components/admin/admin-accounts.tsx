@@ -24,6 +24,8 @@ import {
   adminAdjustAccountBalance,
   adminDeleteAccount,
 } from "@/modules/financial/application/mutations/financial.mutations"
+import { useCryptoPrices, type CryptoPrices } from "@/hooks/use-crypto-prices"
+import { CRYPTO_SYMBOLS, CURRENCY_FLAGS, FX_RATES } from "@/lib/crypto-config"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -31,17 +33,6 @@ type RawUser  = Awaited<ReturnType<typeof adminGetUsers>>[number]
 type FinData  = Awaited<ReturnType<typeof adminGetUserFinancialData>>
 type Account  = FinData["accounts"][number]
 type Feedback = { type: "success" | "error"; msg: string } | null
-
-// ─── Constants ────────────────────────────────────────────────────────────────
-
-const CRYPTO_SYMBOLS = new Set(["BTC", "ETH", "TRX", "USDT", "USDC", "SOL", "BNB"])
-const CRYPTO_USD_RATES: Record<string, number> = {
-  BTC: 70000, ETH: 3500, TRX: 0.152, USDT: 1, USDC: 1, SOL: 180, BNB: 600,
-}
-const CURRENCY_FLAGS: Record<string, string> = {
-  USD: "🇺🇸", EUR: "🇪🇺", GBP: "🇬🇧", SGD: "🇸🇬",
-  BTC: "₿", ETH: "Ξ", TRX: "♦", USDT: "₮", USDC: "₵", SOL: "◎",
-}
 const STATUS_TONE = { active: "green", earning: "brand", pending: "amber" } as const
 
 const BANK_PRESETS = [
@@ -81,11 +72,10 @@ function fmtBalance(account: Account): string {
   return `${account.currency} ${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 }
 
-function toUsd(account: Account): number {
+function toUsd(account: Account, prices: CryptoPrices): number {
   const n = parseFloat(account.balance) || 0
-  if (CRYPTO_SYMBOLS.has(account.currency)) return n * (CRYPTO_USD_RATES[account.currency] ?? 0)
-  const FX: Record<string, number> = { USD: 1, EUR: 1.08, GBP: 1.27, SGD: 0.74 }
-  return n * (FX[account.currency] ?? 1)
+  if (CRYPTO_SYMBOLS.has(account.currency)) return n * (prices[account.currency] ?? 0)
+  return n * (FX_RATES[account.currency] ?? 1)
 }
 
 // ─── Feedback banner ─────────────────────────────────────────────────────────
@@ -339,7 +329,7 @@ function AccountRow({ account, onAdjust, onDelete, isAdjusting }: {
 
 // ─── Student accordion row ────────────────────────────────────────────────────
 
-function StudentAccountRow({ user }: { user: RawUser }) {
+function StudentAccountRow({ user, prices }: { user: RawUser; prices: CryptoPrices }) {
   const [open, setOpen] = useState(false)
   const [showAddBank, setShowAddBank]     = useState(false)
   const [showAddCrypto, setShowAddCrypto] = useState(false)
@@ -353,7 +343,7 @@ function StudentAccountRow({ user }: { user: RawUser }) {
   )
 
   const accounts = data?.accounts ?? []
-  const totalUsd = accounts.reduce((s, a) => s + toUsd(a), 0)
+  const totalUsd = accounts.reduce((s, a) => s + toUsd(a, prices), 0)
   const initials  = getInitials(user.name)
 
   function handleDelete(account: Account) {
@@ -495,6 +485,7 @@ function StudentAccountRow({ user }: { user: RawUser }) {
 
 export function AdminAccountsPage() {
   const { data: users, isLoading, refetch } = useServerData(() => adminGetUsers(), [])
+  const { prices } = useCryptoPrices()
 
   const students = (users ?? []).filter(u => u.role !== "admin")
 
@@ -528,7 +519,7 @@ export function AdminAccountsPage() {
             No students found in the system.
           </div>
         ) : (
-          students.map(u => <StudentAccountRow key={u.id} user={u} />)
+          students.map(u => <StudentAccountRow key={u.id} user={u} prices={prices} />)
         )}
       </div>
 

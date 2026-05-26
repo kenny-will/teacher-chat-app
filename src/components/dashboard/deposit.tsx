@@ -17,6 +17,7 @@ import {
   userCancelDeposit,
   userEditDeposit,
 } from "@/modules/financial/application/mutations/financial.mutations"
+import { CRYPTO_SYMBOLS } from "@/lib/crypto-config"
 
 // ─── ACH static info ─────────────────────────────────────────────
 
@@ -28,8 +29,6 @@ const ACH_INFO = {
   bankName: "First Meridian Bank, N.A.",
   swift: "MRDNUS33",
 }
-
-const CRYPTO_SYMBOLS = new Set(["BTC", "ETH", "TRX", "USDT", "USDC", "SOL", "BNB"])
 
 // ─── Crypto data ─────────────────────────────────────────────────
 
