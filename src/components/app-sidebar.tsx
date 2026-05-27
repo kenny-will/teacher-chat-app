@@ -44,6 +44,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 // ─── Nav definitions ─────────────────────────────────────────────────────────
@@ -98,6 +99,7 @@ function roleLabel(role: string): string {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { mode, view, isAdmin, setView, setMode } = useDashboardNav();
+  const { isMobile, setOpenMobile } = useSidebar();
   const { resolvedTheme, setTheme } = useTheme();
   const router = useRouter();
   const user = useAuth();
@@ -196,7 +198,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     tooltip={item.label}
-                    onClick={() => setView(item.key)}
+                    onClick={() => { setView(item.key); if (isMobile) setOpenMobile(false) }}
                     className={cn(
                       "h-9 gap-2.5 rounded-lg text-[13px] transition",
                       isActive
