@@ -60,7 +60,8 @@ const USER_NAV = [
   { key: "deposit", label: "Deposit", icon: ArrowDownLeftIcon },
   { key: "withdrawal", label: "Withdrawal", icon: ArrowUpRightIcon },
   { key: "cards", label: "Cards", icon: CreditCardIcon, badge: "6" },
-  { key: "invest", label: "Invest", icon: TrendingUpIcon },
+  { key: "invest",    label: "Invest",    icon: TrendingUpIcon },
+  { key: "settings",  label: "Settings",  icon: Settings2Icon  },
 ] as const;
 
 const ADMIN_NAV = [

@@ -336,14 +336,14 @@ export function DepositPage() {
           <div className="col-span-12 lg:col-span-7 space-y-4">
 
             {/* ACH method card */}
-            <div className="rounded-2xl border dark:border-gray-900 border-white darK:bg-gray-900 dark:bg-white p-5">
+            <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
               <div className="flex items-center gap-3 mb-4">
-                <div className="h-9 w-9 rounded-xl bg-white/10 dark:bg-gray-900/10 grid place-items-center">
-                  <BuildingIcon className="h-4.5 w-4.5 text-white dark:text-gray-900" />
+                <div className="h-9 w-9 rounded-xl bg-gray-100 dark:bg-white/10 grid place-items-center">
+                  <BuildingIcon className="h-4.5 w-4.5 text-gray-600 dark:text-gray-400" />
                 </div>
                 <div>
-                  <div className="text-[14px] font-semibold text-white dark:text-gray-900">Bank Transfer (ACH)</div>
-                  <div className="text-[11.5px] text-white/60 dark:text-gray-900/60">
+                  <div className="text-[14px] font-semibold text-gray-900 dark:text-gray-100">Bank Transfer (ACH)</div>
+                  <div className="text-[11.5px] text-gray-500 dark:text-gray-400">
                     Link an external bank and pull funds directly.
                   </div>
                 </div>
@@ -354,9 +354,9 @@ export function DepositPage() {
                   { label: "Speed", value: ACH_INFO.speed  },
                   { label: "Limit", value: ACH_INFO.limit  },
                 ].map((s) => (
-                  <div key={s.label} className="rounded-lg bg-white/8 dark:bg-gray-900/8 px-3 py-2.5">
-                    <div className="text-[10.5px] text-white/50 dark:text-gray-900/50 font-medium uppercase tracking-wide">{s.label}</div>
-                    <div className="text-[12.5px] text-white dark:text-gray-900 font-semibold mt-0.5">{s.value}</div>
+                  <div key={s.label} className="rounded-lg bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 px-3 py-2.5">
+                    <div className="text-[10.5px] text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">{s.label}</div>
+                    <div className="text-[12.5px] text-gray-900 dark:text-gray-100 font-semibold mt-0.5">{s.value}</div>
                   </div>
                 ))}
               </div>

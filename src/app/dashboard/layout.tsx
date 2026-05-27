@@ -1,5 +1,5 @@
-import { requireAuth } from '@/shared/infrastructure/auth/session'
-import { AuthProvider } from '@/contexts/auth-context'
+import { requireAuth } from "@/shared/infrastructure/auth/session";
+import { AuthProvider } from "@/contexts/auth-context";
 
 /**
  * Server Component layout — the auth proxy gate.
@@ -7,21 +7,21 @@ import { AuthProvider } from '@/contexts/auth-context'
  * and redirects to /login if unauthenticated. Runs in Node.js runtime
  * so it has full DB access (contrast: Edge Middleware cannot hit the DB).
  */
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user } = await requireAuth()
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { user } = await requireAuth();
 
   const serializedUser = {
-    id:          user.id,
-    name:        user.name,
-    email:       user.email.value,
-    role:        user.role.value as string,
-    avatarUrl:   user.avatarUrl,
+    id: user.id,
+    name: user.name,
+    email: user.email.value,
+    role: user.role.value as string,
+    avatarUrl: user.avatarUrl,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
-  }
+  };
 
-  return (
-    <AuthProvider user={serializedUser}>
-      {children}
-    </AuthProvider>
-  )
+  return <AuthProvider user={serializedUser}>{children}</AuthProvider>;
 }
