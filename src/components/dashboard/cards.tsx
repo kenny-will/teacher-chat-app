@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { PlusIcon, Settings2Icon, ChevronLeftIcon, ChevronRightIcon, LockIcon, EyeOffIcon, MoreHorizontalIcon } from "lucide-react"
+import { PlusIcon, Settings2Icon, ChevronLeftIcon, ChevronRightIcon, LockIcon, EyeOffIcon, MoreHorizontalIcon, AlertCircleIcon } from "lucide-react"
 import { DonutChart, Sparkline } from "@/components/meridian/charts"
 import { Delta, Tag, PageHeader, SectionHeader, ProgressBar } from "@/components/meridian/primitives"
 import { MastercardCard, VisaCard, VerveCard, GoldCard, BlackCard } from "@/components/meridian/bank-cards"
@@ -10,106 +10,97 @@ import { cn } from "@/lib/utils"
 import { useAuth } from "@/contexts/auth-context"
 import { useServerData } from "@/hooks/use-server-data"
 import {
+  queryCards,
   queryCardTransactions,
   queryCardsSpendCategories,
   queryCardProgramStats,
 } from "@/modules/financial/application/queries/financial.queries"
+import type React from "react"
 
-// ─── Static card definitions ──────────────────────────────────────
-// cardholder is injected from useAuth() at render time
+// ─── Network → visual component map ──────────────────────────────────────────
 
-const CARD_DEFS = [
-  {
-    Component: MastercardCard,
-    number: "5412 7512 3412 3456",
-    validThru: "12/27",
-    variant: "debit",
-    label: "Primary",
-    network: "Mastercard",
-    type: "Physical",
-    status: "active" as const,
-    limit: 50000,
-    spent: 18420,
-    lastFour: "3456",
-  },
-  {
-    Component: VisaCard,
-    number: "4111 0000 1234 5678",
-    validThru: "09/28",
-    variant: "credit",
-    label: "Travel",
-    network: "Visa",
-    type: "Virtual",
-    status: "active" as const,
-    limit: 25000,
-    spent: 9840,
-    lastFour: "5678",
-  },
-  {
-    Component: VerveCard,
-    number: "6500 1234 5678 9012",
-    validThru: "06/27",
-    variant: "debit",
-    label: "Operations",
-    network: "Verve",
-    type: "Physical",
-    status: "active" as const,
-    limit: 15000,
-    spent: 4210,
-    lastFour: "9012",
-  },
-  {
-    Component: GoldCard,
-    number: "5500 9876 5432 1098",
-    validThru: "03/29",
-    variant: "credit",
-    label: "Gold",
-    network: "Mastercard Gold",
-    type: "Physical",
-    status: "active" as const,
-    limit: 100000,
-    spent: 62300,
-    lastFour: "1098",
-  },
-  {
-    Component: BlackCard,
-    number: "4000 0000 0000 0002",
-    validThru: "11/30",
-    variant: "infinite",
-    label: "Infinite",
-    network: "Visa Infinite",
-    type: "Virtual",
-    status: "frozen" as const,
-    limit: 200000,
-    spent: 0,
-    lastFour: "0002",
-  },
-] as const
+type CardComponent = React.ComponentType<{
+  number?: string
+  validThru?: string
+  cardholder?: string
+  variant?: string
+  className?: string
+}>
 
-const statusTone = { active: "green", frozen: "rose" } as const
-const statusLabel = { active: "Active", frozen: "Frozen" } as const
+const NETWORK_MAP: Record<string, CardComponent> = {
+  "Mastercard":      MastercardCard,
+  "Mastercard Gold": GoldCard,
+  "Visa":            VisaCard,
+  "Visa Infinite":   BlackCard,
+  "Verve":           VerveCard,
+}
+
+function resolveComponent(network: string): CardComponent {
+  return NETWORK_MAP[network] ?? MastercardCard
+}
+
+const STATUS_TONE = { active: "green", frozen: "rose", limit_hit: "amber" } as const
+const STATUS_LABEL = { active: "Active", frozen: "Frozen", limit_hit: "Limit hit" } as const
 
 export function CardsPage() {
   const user = useAuth()
   const [activeIdx, setActiveIdx] = useState(0)
 
-  const { data: cardTxns,  isLoading: txnsLoading  } = useServerData(queryCardTransactions)
-  const { data: spendCats, isLoading: catsLoading  } = useServerData(queryCardsSpendCategories)
-  const { data: stats,     isLoading: statsLoading } = useServerData(queryCardProgramStats)
+  const { data: dbCards,   isLoading: cardsLoading  } = useServerData(queryCards)
+  const { data: cardTxns,  isLoading: txnsLoading   } = useServerData(queryCardTransactions)
+  const { data: spendCats, isLoading: catsLoading   } = useServerData(queryCardsSpendCategories)
+  const { data: stats,     isLoading: statsLoading  } = useServerData(queryCardProgramStats)
 
-  const card = CARD_DEFS[activeIdx]
-  const { Component: ActiveCard } = card
-  const spentPct = Math.round((card.spent / card.limit) * 100)
+  const cards = dbCards ?? []
+  const safeIdx = Math.min(activeIdx, Math.max(0, cards.length - 1))
+  const card = cards[safeIdx]
 
-  function prev() { setActiveIdx((i) => (i - 1 + CARD_DEFS.length) % CARD_DEFS.length) }
-  function next() { setActiveIdx((i) => (i + 1) % CARD_DEFS.length) }
+  function prev() { setActiveIdx((i) => (i - 1 + cards.length) % cards.length) }
+  function next() { setActiveIdx((i) => (i + 1) % cards.length) }
+
+  const activeCount = cards.filter((c) => c.status === "active").length
+  const frozenCount = cards.filter((c) => c.status === "frozen").length
+
+  if (cardsLoading) {
+    return (
+      <>
+        <PageHeader eyebrow="Cards" title="Card program." subtitle="Loading…" />
+        <div className="mt-6 space-y-4 animate-pulse">
+          <div className="h-72 rounded-2xl bg-gray-100 dark:bg-white/5" />
+          <div className="h-40 rounded-2xl bg-gray-100 dark:bg-white/5" />
+        </div>
+      </>
+    )
+  }
+
+  if (!cards.length) {
+    return (
+      <>
+        <PageHeader
+          eyebrow="Cards"
+          title="Card program."
+          subtitle="No cards yet — ask your admin to issue one."
+        />
+        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/10 p-14 text-center text-gray-400">
+          <div className="text-[14px] font-medium">No cards issued</div>
+          <div className="text-[12px] mt-1">Your administrator can issue physical or virtual cards from the admin panel.</div>
+        </div>
+      </>
+    )
+  }
+
+  const CardComp = resolveComponent(card.network)
+  const spentNum  = parseFloat(card.spentAmount)
+  const limitNum  = parseFloat(card.limitAmount)
+  const spentPct  = limitNum > 0 ? Math.round((spentNum / limitNum) * 100) : 0
+  const activationFee = parseFloat(card.activationFee ?? '0')
 
   return (
     <>
       <PageHeader
         eyebrow="Cards"
         title="Card program."
-        subtitle={`${CARD_DEFS.filter(c => c.status === "active").length} active · ${CARD_DEFS.filter(c => c.status === "frozen").length} frozen — issue physical or virtual in 60 seconds.`}
+        subtitle={`${activeCount} active · ${frozenCount} frozen — issue physical or virtual in 60 seconds.`}
         actions={
           <>
             <Button variant="outline" size="sm" className="gap-1.5">
@@ -123,24 +114,22 @@ export function CardsPage() {
       />
 
       <div className="grid grid-cols-12 gap-4">
-  
+
         {/* ── Card viewer (left) + details (right) ── */}
-        <div className="col-span-12 lg:col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
+        <div className="col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
           <SectionHeader
             title="My cards"
             subtitle="Click a card below to switch"
-            right={<Tag tone={statusTone[card.status]}>{statusLabel[card.status]}</Tag>}
+            right={<Tag tone={STATUS_TONE[card.status]}>{STATUS_LABEL[card.status]}</Tag>}
           />
 
           <div className="mt-4 flex flex-col lg:flex-row gap-5">
             {/* ── Stacked card display ── */}
             <div className="flex-1 min-w-0">
-              {/* Card stack */}
               <div className="relative w-full" style={{ paddingBottom: "calc(63% + 52px)" }}>
-                {CARD_DEFS.map((def, i) => {
-                  const { Component: CardComp } = def
-                  const offset = i - activeIdx
-                  // Only render active + next 3 peeking cards
+                {cards.map((c, i) => {
+                  const Comp = resolveComponent(c.network)
+                  const offset = i - safeIdx
                   if (offset < 0 || offset > 3) return null
                   const peekPx = [0, 20, 36, 48][offset]
                   const scale  = [1, 0.97, 0.94, 0.91][offset]
@@ -148,15 +137,15 @@ export function CardsPage() {
                   const blur   = offset > 0
                   return (
                     <div
-                      key={def.label}
+                      key={c.id}
                       className="absolute inset-x-0 top-0 transition-all duration-300 origin-top"
                       style={{ transform: `translateY(${peekPx}px) scale(${scale})`, zIndex, filter: blur ? "brightness(0.7)" : "none" }}
                     >
-                      <CardComp
-                        number={def.number}
-                        validThru={def.validThru}
-                        cardholder={i === 0 ? user.name.toUpperCase() : def.lastFour !== CARD_DEFS[activeIdx].lastFour ? "•••• " + def.lastFour : user.name.toUpperCase()}
-                        variant={def.variant}
+                      <Comp
+                        number={c.number}
+                        validThru={c.validThru}
+                        cardholder={i === safeIdx ? user.name.toUpperCase() : `•••• ${c.lastFour}`}
+                        variant={c.cardVariant}
                       />
                     </div>
                   )
@@ -169,13 +158,13 @@ export function CardsPage() {
                   <ChevronLeftIcon className="h-4 w-4" />
                 </button>
                 <div className="flex items-center gap-2">
-                  {CARD_DEFS.map((_, i) => (
+                  {cards.map((_, i) => (
                     <button
                       key={i}
                       onClick={() => setActiveIdx(i)}
                       className={cn(
                         "rounded-full transition-all",
-                        i === activeIdx ? "h-2 w-6 bg-gray-900 dark:bg-white" : "h-2 w-2 bg-gray-200 dark:bg-white/20"
+                        i === safeIdx ? "h-2 w-6 bg-gray-900 dark:bg-white" : "h-2 w-2 bg-gray-200 dark:bg-white/20"
                       )}
                     />
                   ))}
@@ -188,14 +177,32 @@ export function CardsPage() {
 
             {/* ── Active card details ── */}
             <div className="w-full lg:w-55 shrink-0 space-y-3">
+              {/* Activation banner */}
+              {!card.isActivated && (
+                <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3.5">
+                  <AlertCircleIcon className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                  <div>
+                    <div className="text-[12px] font-semibold text-amber-700 dark:text-amber-400">Activation required</div>
+                    {activationFee > 0 && (
+                      <div className="text-[11px] text-amber-600 dark:text-amber-500 mt-0.5">
+                        One-time fee: ${activationFee.toFixed(2)}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               {/* Card meta */}
               <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-2.5 text-[12.5px]">
                 {[
-                  { label: "Network",   value: card.network },
-                  { label: "Type",      value: card.type },
-                  { label: "Label",     value: card.label },
-                  { label: "Ends in",   value: `•••• ${card.lastFour}` },
-                  { label: "Expires",   value: card.validThru },
+                  { label: "Network",  value: card.network },
+                  { label: "Type",     value: card.cardType === "virtual" ? "Virtual" : "Physical" },
+                  { label: "Label",    value: card.label },
+                  { label: "Ends in",  value: `•••• ${card.lastFour}` },
+                  { label: "Expires",  value: card.validThru },
+                  ...(activationFee > 0
+                    ? [{ label: "Activation fee", value: `$${activationFee.toFixed(2)}` }]
+                    : []),
                 ].map((row) => (
                   <div key={row.label} className="flex items-center justify-between">
                     <span className="text-gray-500 dark:text-gray-400">{row.label}</span>
@@ -208,11 +215,11 @@ export function CardsPage() {
               <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4">
                 <div className="flex items-center justify-between text-[12.5px] mb-2">
                   <span className="text-gray-500 dark:text-gray-400">Monthly limit</span>
-                  <span className="font-semibold tabular-nums">${card.limit.toLocaleString()}</span>
+                  <span className="font-semibold tabular-nums">${limitNum.toLocaleString()}</span>
                 </div>
                 <ProgressBar value={spentPct} />
                 <div className="mt-1.5 flex justify-between text-[11px] text-gray-400 dark:text-gray-500 tabular-nums">
-                  <span>${card.spent.toLocaleString()} spent</span>
+                  <span>${spentNum.toLocaleString()} spent</span>
                   <span>{spentPct}%</span>
                 </div>
               </div>
@@ -232,25 +239,25 @@ export function CardsPage() {
 
           {/* ── Card thumbnail strip ── */}
           <div className="mt-5 flex gap-2 overflow-x-auto pb-1">
-            {CARD_DEFS.map((def, i) => {
-              const { Component: ThumbComp } = def
+            {cards.map((c, i) => {
+              const ThumbComp = resolveComponent(c.network)
               return (
                 <button
-                  key={def.label}
+                  key={c.id}
                   onClick={() => setActiveIdx(i)}
                   className={cn(
                     "shrink-0 w-35 rounded-xl overflow-hidden transition ring-2",
-                    i === activeIdx ? "ring-gray-900 dark:ring-white" : "ring-transparent opacity-60 hover:opacity-90"
+                    i === safeIdx ? "ring-gray-900 dark:ring-white" : "ring-transparent opacity-60 hover:opacity-90"
                   )}
                 >
                   <ThumbComp
-                    number={def.number}
-                    validThru={def.validThru}
-                    cardholder={i === activeIdx ? user.name.toUpperCase() : "•••• " + def.lastFour}
-                    variant={def.variant}
+                    number={c.number}
+                    validThru={c.validThru}
+                    cardholder={i === safeIdx ? user.name.toUpperCase() : `•••• ${c.lastFour}`}
+                    variant={c.cardVariant}
                   />
                   <div className="mt-1 px-0.5 flex items-center justify-between">
-                    <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 truncate">{def.label}</span>
+                    <span className="text-[10px] font-medium text-gray-600 dark:text-gray-400 truncate">{c.label}</span>
                     <MoreHorizontalIcon className="h-3 w-3 text-gray-400 shrink-0" />
                   </div>
                 </button>

@@ -78,7 +78,8 @@ export function WithdrawalPage() {
   const [transferType, setTransferType] = useState<"bank" | "crypto">("bank")
 
   // Bank form state
-  const [recipientIdx, setRecipientIdx] = useState(0)
+  const [recipientName, setRecipientName] = useState("")
+  const [recipientEmail, setRecipientEmail] = useState("")
   const [rail, setRail]                 = useState<typeof RAILS[number]>("Wire")
   const [bankAmount, setBankAmount]     = useState("")
   const [bankMemo, setBankMemo]         = useState("")
@@ -108,17 +109,17 @@ export function WithdrawalPage() {
   // ── Handlers ──
 
   async function handleBankSend() {
-    if (!bankAmount || bankUsdAmount <= 0 || sending) return
+    if (!bankAmount || bankUsdAmount <= 0 || !recipientName.trim() || sending) return
     setSending(true)
     setFeedback(null)
     try {
       await userRequestWithdrawal({
-        description: RECENTS[recipientIdx].name,
+        description: recipientName.trim(),
         category: `Withdrawal · ${rail}`,
         amountUsd: bankUsdAmount,
         accountRef: bankMemo || `Operating · Primary`,
       })
-      setFeedback({ type: "success", msg: `$${bankUsdAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} withdrawal to ${RECENTS[recipientIdx].name} submitted for approval.` })
+      setFeedback({ type: "success", msg: `$${bankUsdAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} withdrawal to ${recipientName.trim()} submitted for approval.` })
       setBankAmount("")
       setBankMemo("")
       refetch()
@@ -191,20 +192,47 @@ export function WithdrawalPage() {
       {transferType === "bank" && (
         <div className="grid grid-cols-12 gap-4">
           {/* Payment composer */}
-          <div className="col-span-12 lg:col-span-7 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
+          <div className="col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
             <SectionHeader title="New withdrawal" subtitle="Fill in details and send for admin approval" />
 
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {/* Recipient display */}
-              <div className="col-span-2">
-                <div className="text-[11.5px] text-gray-500 dark:text-gray-400 mb-1">Recipient</div>
-                <div className="flex items-center gap-3 rounded-lg border border-gray-200 dark:border-white/10 p-3">
-                  <AvatarBadge name={RECENTS[recipientIdx].name} size={36} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[13px] font-medium">{RECENTS[recipientIdx].name}</div>
-                    <div className="text-[11.5px] text-gray-500 dark:text-gray-400">{RECENTS[recipientIdx].email}</div>
-                  </div>
-                  <Tag tone="green">Verified</Tag>
+              {/* Recipient inputs */}
+              <div className="col-span-2 space-y-2">
+                <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Recipient</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={recipientName}
+                    onChange={e => setRecipientName(e.target.value)}
+                    placeholder="Full name or company"
+                    className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                  />
+                  <input
+                    type="email"
+                    value={recipientEmail}
+                    onChange={e => setRecipientEmail(e.target.value)}
+                    placeholder="email@example.com"
+                    className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                  />
+                </div>
+                {/* Recent quick-select */}
+                <div className="flex flex-wrap gap-1.5 pt-0.5">
+                  {RECENTS.map((r) => (
+                    <button
+                      key={r.email}
+                      type="button"
+                      onClick={() => { setRecipientName(r.name); setRecipientEmail(r.email) }}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition",
+                        recipientName === r.name && recipientEmail === r.email
+                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
+                          : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5",
+                      )}
+                    >
+                      <AvatarBadge name={r.name} size={16} />
+                      {r.name}
+                    </button>
+                  ))}
                 </div>
               </div>
 
@@ -263,7 +291,7 @@ export function WithdrawalPage() {
                 <input
                   value={bankMemo}
                   onChange={e => setBankMemo(e.target.value)}
-                  placeholder={`Invoice / reference for ${RECENTS[recipientIdx].name}…`}
+                  placeholder={`Invoice / reference for ${recipientName.trim() || "recipient"}…`}
                   className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
                 />
               </div>
@@ -299,7 +327,7 @@ export function WithdrawalPage() {
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  disabled={!bankAmount || bankUsdAmount <= 0 || sending}
+                  disabled={!bankAmount || bankUsdAmount <= 0 || !recipientName.trim() || sending}
                   onClick={handleBankSend}
                   className="gap-1.5"
                 >
@@ -311,37 +339,7 @@ export function WithdrawalPage() {
             </div>
           </div>
 
-          {/* Recent recipients */}
-          <div className="col-span-12 lg:col-span-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
-            <SectionHeader
-              title="Recent recipients"
-              right={<button className="text-[12px] text-blue-600 dark:text-blue-400 font-medium">Manage</button>}
-            />
-            <div className="mt-3 space-y-1">
-              {RECENTS.map((r, i) => (
-                <button
-                  key={i}
-                  onClick={() => setRecipientIdx(i)}
-                  className={cn(
-                    "w-full flex items-center gap-3 rounded-lg p-2.5 transition text-left",
-                    recipientIdx === i
-                      ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
-                      : "hover:bg-gray-50 dark:hover:bg-white/8",
-                  )}
-                >
-                  <AvatarBadge name={r.name} size={32} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12.5px] font-medium truncate">{r.name}</div>
-                    <div className={cn("text-[11px] truncate", recipientIdx === i ? "text-white/60 dark:text-gray-900/60" : "text-gray-500 dark:text-gray-400")}>
-                      {r.email}
-                    </div>
-                  </div>
-                  <Tag tone="neutral">{r.type}</Tag>
-                </button>
-              ))}
-            </div>
-          </div>
-
+         
           {/* Recent withdrawals */}
           <div className="col-span-12 lg:col-span-8 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
             <SectionHeader
@@ -395,7 +393,7 @@ export function WithdrawalPage() {
       {transferType === "crypto" && (
         <div className="grid grid-cols-12 gap-4">
           {/* Crypto withdrawal form */}
-          <div className="col-span-12 lg:col-span-7 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
+          <div className="col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
             <SectionHeader title="Crypto withdrawal" subtitle="Funds leave within one confirmation" />
 
             {/* Network selector */}
@@ -539,50 +537,7 @@ export function WithdrawalPage() {
             </div>
           </div>
 
-          {/* Saved wallets */}
-          <div className="col-span-12 lg:col-span-5 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
-            <SectionHeader
-              title="Saved wallets"
-              right={<button className="text-[12px] text-blue-600 dark:text-blue-400 font-medium">Manage</button>}
-            />
-            <div className="mt-3 space-y-1">
-              {SAVED_WALLETS.map((w, i) => {
-                const net = CRYPTO_NETWORKS.find(n => n.id === w.network) ?? CRYPTO_NETWORKS[0]
-                return (
-                  <button
-                    key={i}
-                    onClick={() => { setCryptoNet(w.network); setToAddress(w.address) }}
-                    className="w-full flex items-center gap-3 rounded-lg p-2.5 hover:bg-gray-50 dark:hover:bg-white/5 transition text-left"
-                  >
-                    <NetworkBadge net={net} size={32} />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[12.5px] font-medium">{w.label}</div>
-                      <div className="text-[11px] text-gray-500 dark:text-gray-400 font-mono truncate">{w.address}</div>
-                    </div>
-                    <Tag tone="neutral">{net.symbol}</Tag>
-                  </button>
-                )
-              })}
-            </div>
-
-            {/* 30-day activity from real data */}
-            <div className="mt-5">
-              <SectionHeader title="30-day activity" />
-              <div className="mt-3 grid grid-cols-2 gap-3">
-                {[
-                  { label: "Total sent",    value: allOutbound.length === 0 ? "$0.00" : `$${allOutbound.reduce((s, t) => s + (parseFloat(t.amount.replace(/[^0-9.]/g, "")) || 0), 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}` },
-                  { label: "Transactions",  value: allOutbound.length.toString() },
-                  { label: "Pending",       value: pendingOut.length.toString() },
-                  { label: "Networks used", value: new Set(allOutbound.map(t => t.category.replace("Withdrawal · ", ""))).size.toString() },
-                ].map((s) => (
-                  <div key={s.label} className="rounded-lg border border-gray-200 dark:border-white/10 px-3 py-2.5">
-                    <div className="text-[10.5px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">{s.label}</div>
-                    <div className="text-[15px] font-semibold tabular-nums mt-0.5">{s.value}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+       
 
           {/* Recent crypto withdrawals */}
           <div className="col-span-12 rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">

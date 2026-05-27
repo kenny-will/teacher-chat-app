@@ -87,51 +87,51 @@ export function LanguageSwitcher({ variant = "dashboard" }: LanguageSwitcherProp
 
   // ── Landing variant ────────────────────────────────────────────
 
-  if (variant === "landing") {
-    return (
-      <div ref={ref} className="relative">
-        <button
-          onClick={() => setOpen((o) => !o)}
-          aria-label="Change language"
-          className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 h-9 text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:shadow-sm transition-all"
-        >
-          <span className="text-[16px] leading-none">{lang.flag}</span>
-          <span className="hidden sm:inline">{lang.native}</span>
-          <ChevronDownIcon
-            className={cn("h-3 w-3 text-gray-400 transition-transform duration-200", open && "rotate-180")}
-          />
-        </button>
+  // if (variant === "landing") {
+  //   return (
+  //     <div ref={ref} className="relative">
+  //       <button
+  //         onClick={() => setOpen((o) => !o)}
+  //         aria-label="Change language"
+  //         className="flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 h-9 text-[13px] font-medium text-gray-600 hover:text-gray-900 hover:border-gray-300 hover:shadow-sm transition-all"
+  //       >
+  //         <span className="text-[16px] leading-none">{lang.flag}</span>
+  //         <span className="hidden sm:inline">{lang.native}</span>
+  //         <ChevronDownIcon
+  //           className={cn("h-3 w-3 text-gray-400 transition-transform duration-200", open && "rotate-180")}
+  //         />
+  //       </button>
 
-        {open && (
-          <div className="absolute right-0 top-[calc(100%+8px)] w-56 rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_-8px_rgba(10,12,18,.18),0_2px_6px_rgba(10,12,18,.06)] overflow-hidden z-[200]">
-            <div className="px-3 py-2.5 border-b border-gray-100 flex items-center gap-2">
-              <GlobeIcon className="h-3.5 w-3.5 text-gray-400" />
-              <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">Language</span>
-            </div>
-            <div className="max-h-72 overflow-y-auto py-1">
-              {LANGUAGES.map((l) => (
-                <button
-                  key={l.code}
-                  onClick={() => select(l.code)}
-                  className={cn(
-                    "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors",
-                    current === l.code
-                      ? "bg-blue-50 text-blue-600"
-                      : "text-gray-700 hover:bg-gray-50"
-                  )}
-                >
-                  <span className="text-[18px] leading-none shrink-0">{l.flag}</span>
-                  <span className="flex-1 text-[13px] font-medium">{l.native}</span>
-                  <span className="text-[11px] text-gray-400 shrink-0">{l.english}</span>
-                  {current === l.code && <CheckIcon className="h-3.5 w-3.5 text-blue-600 shrink-0" />}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )
-  }
+  //       {open && (
+  //         <div className="absolute right-0 top-[calc(100%+8px)] w-56 rounded-xl border border-gray-200 bg-white shadow-[0_8px_32px_-8px_rgba(10,12,18,.18),0_2px_6px_rgba(10,12,18,.06)] overflow-hidden z-[200]">
+  //           <div className="px-3 py-2.5 border-b border-gray-100 flex items-center gap-2">
+  //             <GlobeIcon className="h-3.5 w-3.5 text-gray-400" />
+  //             <span className="text-[11px] font-semibold text-gray-500 uppercase tracking-widest">Language</span>
+  //           </div>
+  //           <div className="max-h-72 overflow-y-auto py-1">
+  //             {LANGUAGES.map((l) => (
+  //               <button
+  //                 key={l.code}
+  //                 onClick={() => select(l.code)}
+  //                 className={cn(
+  //                   "w-full flex items-center gap-3 px-3 py-2 text-left transition-colors",
+  //                   current === l.code
+  //                     ? "bg-blue-50 text-blue-600"
+  //                     : "text-gray-700 hover:bg-gray-50"
+  //                 )}
+  //               >
+  //                 <span className="text-[18px] leading-none shrink-0">{l.flag}</span>
+  //                 <span className="flex-1 text-[13px] font-medium">{l.native}</span>
+  //                 <span className="text-[11px] text-gray-400 shrink-0">{l.english}</span>
+  //                 {current === l.code && <CheckIcon className="h-3.5 w-3.5 text-blue-600 shrink-0" />}
+  //               </button>
+  //             ))}
+  //           </div>
+  //         </div>
+  //       )}
+  //     </div>
+  //   )
+  // }
 
   // ── Dashboard variant (icon button) ───────────────────────────
 
@@ -143,11 +143,11 @@ export function LanguageSwitcher({ variant = "dashboard" }: LanguageSwitcherProp
         title="Change language"
         className={cn(
           "h-9 w-9 grid place-items-center rounded-lg border border-gray-200 dark:border-white/10",
-          "text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/8 transition-colors relative",
+          "text-gray-600 dark:text-gray-400 hover:bg-green-600 dark:hover:bg-white/8 transition-colors relative",
           open && "bg-gray-50 dark:bg-white/8 border-gray-300 dark:border-white/20"
         )}
       >
-        <GlobeIcon className="h-4 w-4" />
+        <GlobeIcon className="h-4 w-4 text-white " />
         {current !== "en" && (
           <span className="absolute -top-1.5 -right-1.5 h-4 w-4 flex items-center justify-center rounded-full bg-[#2A5CFF] text-[10px] text-white font-bold leading-none pointer-events-none">
             {lang.flag}

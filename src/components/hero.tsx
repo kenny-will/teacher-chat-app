@@ -1,3 +1,4 @@
+import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
 /**
@@ -8,7 +9,6 @@ import React, { useState } from "react";
  *   • Tailwind CSS (arbitrary values enabled — default in v3+)
  *   • Hanken Grotesk loaded via Google Fonts (close stand-in for Perks Sans)
  *
- * Drop the hero image at: /assets/hero-desktop.webp (or pass `heroSrc`).
  */
 
 export interface HeroProps {
@@ -16,28 +16,6 @@ export interface HeroProps {
   onSubmit?: (email: string) => void;
   className?: string;
 }
-
-/* -------------------------------------------------------------------------- */
-/*  Atoms                                                                     */
-/* -------------------------------------------------------------------------- */
-
-const PerkLogo: React.FC<{ className?: string }> = ({ className = "" }) => (
-  <svg viewBox="0 0 120 40" className={className} aria-label="Perks" role="img">
-    <text
-      x="0"
-      y="30"
-      fontFamily="'Hanken Grotesk', system-ui, sans-serif"
-      fontWeight={800}
-      fontStyle="italic"
-      fontSize="32"
-      fill="#1ec677"
-      letterSpacing="-1"
-    >
-      perks
-    </text>
-    <circle cx="106" cy="11" r="3" fill="#1ec677" />
-  </svg>
-);
 
 const CheckIcon: React.FC<{ className?: string }> = ({ className = "" }) => (
   <svg
@@ -242,12 +220,12 @@ const TrustMarquee: React.FC = () => {
 /* -------------------------------------------------------------------------- */
 
 export const Hero: React.FC<HeroProps> = ({
-  heroSrc = "/img/hero-desktop.webp",
+  heroSrc = "/img/hero-desktop.png",
   onSubmit,
   className = "",
 }) => {
   const [email, setEmail] = useState("");
-
+  const router = useRouter();
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit?.(email);
@@ -272,36 +250,6 @@ export const Hero: React.FC<HeroProps> = ({
         }
       `}</style>
 
-      {/* ---------------- Top bar ---------------- */}
-      <header className="relative z-20 flex items-center justify-between px-5 py-5 sm:px-10 lg:px-14">
-        <div className="flex items-center gap-5 sm:gap-7">
-          <button
-            type="button"
-            aria-label="Open menu"
-            className="grid h-8 w-8 place-items-center rounded text-white/95 hover:text-white"
-          >
-            <MenuIcon className="h-6 w-6" />
-          </button>
-          <PerkLogo className="h-8 w-auto sm:h-9" />
-        </div>
-
-        <div className="flex items-center gap-3 sm:gap-6">
-          <a
-            href="#get-started"
-            className="rounded-full bg-emerald-400 px-5 py-2.5 text-[15px] font-semibold text-emerald-950 transition-colors hover:bg-emerald-300 sm:px-6 sm:py-3 sm:text-base"
-          >
-            Get started
-          </a>
-          <a
-            href="#login"
-            className="hidden items-center gap-2 whitespace-nowrap text-[15px] font-semibold text-white hover:text-emerald-100 sm:flex"
-          >
-            <UserIcon className="h-6 w-6" />
-            Log in
-          </a>
-        </div>
-      </header>
-
       {/* ---------------- Hero ---------------- */}
       <section className="relative z-10 mx-auto grid w-full max-w-[1400px] grid-cols-1 items-center gap-10 px-5 pb-14 pt-6 sm:px-10 lg:grid-cols-[1.05fr_1fr] lg:gap-6 lg:px-14 lg:pt-12 xl:gap-10">
         {/* Copy column */}
@@ -314,39 +262,55 @@ export const Hero: React.FC<HeroProps> = ({
               letterSpacing: "-0.025em",
             }}
           >
-            America&rsquo;s #1
+            World-Class
+            {/* America&rsquo;s #1 */}
             <br />
-            Choice for
+            Banking for
             <br />
-            Banking
+            Everyone
           </h1>
 
           <ul className="mt-8 space-y-3 text-[17px] leading-[1.5] sm:mt-10 sm:text-lg">
             {[
               <>
-                <a className="underline decoration-2 underline-offset-[6px]" href="#">
+                <a
+                  className="underline decoration-2 underline-offset-[6px]"
+                  href="#"
+                >
                   Fee-free banking
                 </a>{" "}
                 plus{" "}
-                <a className="underline decoration-2 underline-offset-[6px]" href="#">
+                <a
+                  className="underline decoration-2 underline-offset-[6px]"
+                  href="#"
+                >
                   early pay access
                 </a>
                 .
               </>,
               <>
-                <a className="underline decoration-2 underline-offset-[6px]" href="#">
+                <a
+                  className="underline decoration-2 underline-offset-[6px]"
+                  href="#"
+                >
                   5% cash back and build credit everyday
                 </a>
                 .
               </>,
               <>
-                <a className="underline decoration-2 underline-offset-[6px]" href="#">
+                <a
+                  className="underline decoration-2 underline-offset-[6px]"
+                  href="#"
+                >
                   3.75% APY on your savings
                 </a>
                 .
               </>,
             ].map((node, i) => (
-              <li key={i} className="flex items-start gap-3 font-medium text-white">
+              <li
+                key={i}
+                className="flex items-start gap-3 font-medium text-white"
+              >
                 <CheckIcon className="mt-1.5 h-4 w-4 shrink-0 text-emerald-400" />
                 <span>{node}</span>
               </li>
@@ -363,7 +327,6 @@ export const Hero: React.FC<HeroProps> = ({
               <span className="sr-only">Email address</span>
               <input
                 type="email"
-                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
@@ -371,7 +334,7 @@ export const Hero: React.FC<HeroProps> = ({
               />
             </label>
             <button
-              type="submit"
+              onClick={() => router.push("/dashboard")}
               className="h-14 shrink-0 rounded-md bg-emerald-400 px-8 text-[16px] font-semibold text-emerald-950 transition-colors hover:bg-emerald-300 sm:h-[58px] sm:px-10"
             >
               Get started

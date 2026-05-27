@@ -44,7 +44,7 @@ const ADMIN_BREADCRUMBS: Record<string, string[]> = {
 };
 
 export function SiteHeader() {
-  const { mode, view } = useDashboardNav();
+  const { mode, view, setView } = useDashboardNav();
   const user = useAuthOptional();
   const router = useRouter();
 
@@ -109,7 +109,7 @@ export function SiteHeader() {
 
           {/* CTA */}
           {mode === "user" && (
-            <Button size="sm" className="gap-1.5 h-9">
+            <Button size="sm" onClick={() => setView('deposit')} className="gap-1.5 h-9">
               <SendIcon className="h-3.5 w-3.5" />
               Send money
             </Button>

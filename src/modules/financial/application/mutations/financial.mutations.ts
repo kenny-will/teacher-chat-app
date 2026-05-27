@@ -260,6 +260,79 @@ export async function adminHoldTransaction(txnId: string): Promise<void> {
   await repo.updateTransactionStatus(txnId, 'On Hold', 'amber')
 }
 
+/** Admin: create a card for a user. */
+export async function adminCreateCard(
+  userId: string,
+  params: {
+    label: string
+    cardUser: string
+    lastFour: string
+    network: string
+    cardVariant: string
+    number: string
+    validThru: string
+    limitAmount: string
+    spentAmount?: string
+    activationFee?: string
+    isActivated?: boolean
+    cardType: 'virtual' | 'physical'
+    status?: 'active' | 'frozen' | 'limit_hit'
+    isOwnerCard?: boolean
+    sortOrder?: number
+  },
+): Promise<void> {
+  await requireAdmin()
+  await repo.insertCard({
+    userId,
+    label: params.label,
+    cardUser: params.cardUser,
+    lastFour: params.lastFour,
+    network: params.network,
+    cardVariant: params.cardVariant,
+    number: params.number,
+    validThru: params.validThru,
+    limitAmount: params.limitAmount,
+    spentAmount: params.spentAmount ?? '0',
+    activationFee: params.activationFee ?? '0',
+    isActivated: params.isActivated ?? true,
+    cardType: params.cardType,
+    status: params.status ?? 'active',
+    isOwnerCard: params.isOwnerCard ?? false,
+    sortOrder: params.sortOrder ?? 999,
+  })
+}
+
+/** Admin: update any card fields. */
+export async function adminUpdateCard(
+  cardId: string,
+  params: {
+    label?: string
+    cardUser?: string
+    lastFour?: string
+    network?: string
+    cardVariant?: string
+    number?: string
+    validThru?: string
+    limitAmount?: string
+    spentAmount?: string
+    activationFee?: string
+    isActivated?: boolean
+    cardType?: 'virtual' | 'physical'
+    status?: 'active' | 'frozen' | 'limit_hit'
+    isOwnerCard?: boolean
+    sortOrder?: number
+  },
+): Promise<void> {
+  await requireAdmin()
+  await repo.updateCard(cardId, params)
+}
+
+/** Admin: delete a card. */
+export async function adminDeleteCard(cardId: string): Promise<void> {
+  await requireAdmin()
+  await repo.deleteCard(cardId)
+}
+
 /** Admin: get all financial data for a specific user (for inspect/edit). */
 export async function adminGetUserFinancialData(userId: string) {
   await requireAdmin()

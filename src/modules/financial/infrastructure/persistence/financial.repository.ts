@@ -244,6 +244,28 @@ export async function insertCard(data: NewUserCard) {
   return row
 }
 
+export async function updateCard(id: string, data: Partial<Omit<NewUserCard, 'id' | 'userId' | 'createdAt'>>) {
+  const [row] = await db
+    .update(userCardsTable)
+    .set(data)
+    .where(eq(userCardsTable.id, id))
+    .returning()
+  return row
+}
+
+export async function deleteCard(id: string) {
+  await db.delete(userCardsTable).where(eq(userCardsTable.id, id))
+}
+
+export async function getCardById(id: string) {
+  const [row] = await db
+    .select()
+    .from(userCardsTable)
+    .where(eq(userCardsTable.id, id))
+    .limit(1)
+  return row ?? null
+}
+
 export async function insertCardTransaction(data: NewUserCardTransaction) {
   const [row] = await db.insert(userCardTransactionsTable).values(data).returning()
   return row
@@ -448,12 +470,12 @@ export async function seedDemoFinancialData(userId: string, ownerName: string) {
 
   // Cards
   const cards = [
-    { label: 'Platinum', cardUser: ownerName, lastFour: '0192', limitAmount: '50000', spentAmount: '24180', cardType: 'physical' as const, status: 'active' as const, isOwnerCard: true, sortOrder: 0 },
-    { label: 'Engineering · Virtual', cardUser: 'AWS, GCP, Datadog', lastFour: '7714', limitAmount: '80000', spentAmount: '62420', cardType: 'virtual' as const, status: 'active' as const, isOwnerCard: false, sortOrder: 1 },
-    { label: 'Travel', cardUser: 'Marcus Lee', lastFour: '1188', limitAmount: '15000', spentAmount: '8420', cardType: 'physical' as const, status: 'active' as const, isOwnerCard: false, sortOrder: 2 },
-    { label: 'Growth · Ads', cardUser: 'Google, Meta, LinkedIn', lastFour: '9203', limitAmount: '100000', spentAmount: '98500', cardType: 'virtual' as const, status: 'limit_hit' as const, isOwnerCard: false, sortOrder: 3 },
-    { label: 'Operations', cardUser: 'Office, supplies', lastFour: '4012', limitAmount: '10000', spentAmount: '3120', cardType: 'virtual' as const, status: 'active' as const, isOwnerCard: false, sortOrder: 4 },
-    { label: 'Onboarding · Frozen', cardUser: 'Priya Shah (offboarded)', lastFour: '6677', limitAmount: '5000', spentAmount: '0', cardType: 'physical' as const, status: 'frozen' as const, isOwnerCard: false, sortOrder: 5 },
+    { label: 'Platinum', cardUser: ownerName, lastFour: '0192', network: 'Mastercard', cardVariant: 'debit', number: '5412 7512 3412 0192', validThru: '12/27', limitAmount: '50000', spentAmount: '24180', activationFee: '0', isActivated: true, cardType: 'physical' as const, status: 'active' as const, isOwnerCard: true, sortOrder: 0 },
+    { label: 'Engineering · Virtual', cardUser: 'AWS, GCP, Datadog', lastFour: '7714', network: 'Visa', cardVariant: 'credit', number: '4111 0000 1234 7714', validThru: '09/28', limitAmount: '80000', spentAmount: '62420', activationFee: '0', isActivated: true, cardType: 'virtual' as const, status: 'active' as const, isOwnerCard: false, sortOrder: 1 },
+    { label: 'Travel', cardUser: 'Marcus Lee', lastFour: '1188', network: 'Visa Infinite', cardVariant: 'infinite', number: '4000 0000 0011 1188', validThru: '06/29', limitAmount: '15000', spentAmount: '8420', activationFee: '5', isActivated: true, cardType: 'physical' as const, status: 'active' as const, isOwnerCard: false, sortOrder: 2 },
+    { label: 'Growth · Ads', cardUser: 'Google, Meta, LinkedIn', lastFour: '9203', network: 'Mastercard Gold', cardVariant: 'credit', number: '5500 9876 5432 9203', validThru: '03/29', limitAmount: '100000', spentAmount: '98500', activationFee: '0', isActivated: true, cardType: 'virtual' as const, status: 'limit_hit' as const, isOwnerCard: false, sortOrder: 3 },
+    { label: 'Operations', cardUser: 'Office, supplies', lastFour: '4012', network: 'Verve', cardVariant: 'debit', number: '6500 1234 5678 4012', validThru: '11/30', limitAmount: '10000', spentAmount: '3120', activationFee: '2.50', isActivated: true, cardType: 'virtual' as const, status: 'active' as const, isOwnerCard: false, sortOrder: 4 },
+    { label: 'Onboarding · Frozen', cardUser: 'Priya Shah (offboarded)', lastFour: '6677', network: 'Mastercard', cardVariant: 'debit', number: '5412 0000 0066 6677', validThru: '01/26', limitAmount: '5000', spentAmount: '0', activationFee: '5', isActivated: false, cardType: 'physical' as const, status: 'frozen' as const, isOwnerCard: false, sortOrder: 5 },
   ]
   const insertedCards: Array<{ id: string; label: string }> = []
   for (const c of cards) {

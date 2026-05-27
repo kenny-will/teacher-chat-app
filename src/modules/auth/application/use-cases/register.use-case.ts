@@ -9,6 +9,10 @@ import { passwordService } from '@/modules/auth/infrastructure/services/password
 import { db } from '@/shared/infrastructure/database/client'
 import { userCredentialsTable } from '@/modules/auth/infrastructure/persistence/schema'
 import { logger } from '@/shared/infrastructure/logger/logger'
+import { insertCard } from '@/modules/financial/infrastructure/persistence/financial.repository'
+
+// ─── Default card issued to every new user ───────────────────────────────────
+const DEFAULT_CARD_ACTIVATION_FEE = '1500' // $1500 one-time activation fee
 
 const log = logger.child({ module: 'register-use-case' })
 
@@ -82,6 +86,30 @@ export class RegisterUseCase {
       await this.userRepo.delete(saveResult.data.id)
       log.error({ error, userId }, 'Failed to persist credentials — user creation rolled back')
       return err(new Error('Failed to create account', { cause: error }))
+    }
+
+    // 7. Issue default Mastercard (best-effort — never blocks registration)
+    try {
+      await insertCard({
+        userId:         saveResult.data.id,
+        label:          'Primary',
+        cardUser:       input.name.trim(),
+        lastFour:       '0000',
+        network:        'Mastercard',
+        cardVariant:    'debit',
+        number:         '5412 0000 0000 0000',
+        validThru:      '01/31',
+        limitAmount:    '5000',
+        spentAmount:    '0',
+        activationFee:  DEFAULT_CARD_ACTIVATION_FEE, 
+        isActivated:    false,
+        cardType:       'physical',
+        status:         'active',
+        isOwnerCard:    true,
+        sortOrder:      0,
+      })
+    } catch (cardError) {
+      log.warn({ cardError, userId: saveResult.data.id }, 'Default card creation failed — user still created')
     }
 
     log.info({ userId: saveResult.data.id }, 'User registered')
