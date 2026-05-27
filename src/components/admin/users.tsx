@@ -1,8 +1,9 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { DownloadIcon, PlusIcon, MailIcon, FilterIcon, SearchIcon, Settings2Icon } from "lucide-react"
+import { DownloadIcon, PlusIcon, MailIcon, SearchIcon, Settings2Icon, UserCheckIcon, LoaderIcon } from "lucide-react"
 import { Tag, PageHeader, AvatarBadge } from "@/components/meridian/primitives"
 import { cn } from "@/lib/utils"
 import { useServerData } from "@/hooks/use-server-data"
@@ -35,8 +36,33 @@ export function AdminUsersPage() {
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<(typeof TABS)[number]>("All")
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null)
+  const [impersonating, setImpersonating] = useState<string | null>(null)
+  const router = useRouter()
 
   const { data: users, isLoading } = useServerData(adminGetUsers)
+
+  async function handleImpersonate(userId: string, userName: string) {
+    if (!confirm(`Sign in as ${userName}? You will be logged out of your admin account.`)) return
+    setImpersonating(userId)
+    try {
+      const res = await fetch('/api/admin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ targetUserId: userId }),
+      })
+      if (!res.ok) {
+        const { error } = await res.json()
+        alert(`Impersonation failed: ${error}`)
+        return
+      }
+      // Full page reload so auth context picks up the new session cookie
+      window.location.href = '/dashboard'
+    } catch {
+      alert('Impersonation failed — network error')
+    } finally {
+      setImpersonating(null)
+    }
+  }
 
   if (selectedUser) {
     return (
@@ -124,8 +150,8 @@ export function AdminUsersPage() {
           <div className="col-span-4">User</div>
           <div className="col-span-2">Role</div>
           <div className="col-span-2">Status</div>
-          <div className="col-span-2 text-right">Last seen</div>
-          <div className="col-span-2 text-right">Actions</div>
+          <div className="col-span-1 text-right">Last seen</div>
+          <div className="col-span-3 text-right">Actions</div>
         </div>
 
         {isLoading ? (
@@ -162,10 +188,24 @@ export function AdminUsersPage() {
                   {u.status.charAt(0).toUpperCase() + u.status.slice(1)}
                 </Tag>
               </div>
-              <div className="col-span-2 text-right text-gray-500">
+              <div className="col-span-1 text-right text-gray-500">
                 {formatLastSeen(u.lastLoginAt)}
               </div>
-              <div className="col-span-2 text-right">
+              <div className="col-span-3 text-right flex items-center justify-end gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="gap-1.5 text-indigo-600 border-indigo-200 hover:bg-indigo-50 hover:border-indigo-300 dark:text-indigo-400 dark:border-indigo-500/30 dark:hover:bg-indigo-500/10"
+                  disabled={impersonating === u.id}
+                  onClick={() => handleImpersonate(u.id, u.name)}
+                >
+                  {impersonating === u.id ? (
+                    <LoaderIcon className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <UserCheckIcon className="h-3.5 w-3.5" />
+                  )}
+                  Impersonate
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
