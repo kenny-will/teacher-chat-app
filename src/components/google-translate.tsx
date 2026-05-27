@@ -144,9 +144,9 @@ export function LanguageSwitcher({ variant = "dashboard" }: LanguageSwitcherProp
         aria-label="Change language"
         title="Change language"
         className={cn(
-          "h-9 w-9 grid place-items-center rounded-lg border border-gray-200 dark:border-white/10",
-          "text-gray-600 dark:text-gray-400 hover:bg-green-600 dark:hover:bg-white/8 transition-colors relative",
-          open && "bg-gray-50 dark:bg-white/8 border-gray-300 dark:border-white/20"
+          "h-9 w-9 grid place-items-center rounded-lg border transition-colors relative",
+          "bg-green-600 border-green-600 hover:bg-green-700 hover:border-green-700",
+          open && "bg-green-700 border-green-700"
         )}
       >
         <GlobeIcon className="h-4 w-4 text-white " />

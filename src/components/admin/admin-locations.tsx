@@ -69,62 +69,62 @@ function LocationRow({ loc }: { loc: UserLocation }) {
       ? `https://www.google.com/maps?q=${loc.latitude},${loc.longitude}`
       : null;
 
+  const locationStr = loc.latitude
+    ? [loc.city, loc.region, loc.country].filter(Boolean).join(", ")
+    : "Location unknown";
+
   return (
-    <div className="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 dark:border-white/8 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition">
-      <div className="relative shrink-0">
-        <AvatarBadge name={loc.userName} size={36} />
-        <span
-          className={cn(
-            "absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full border-2 border-white dark:border-gray-900",
-            loc.isOnline ? "bg-emerald-500" : "bg-gray-400",
-          )}
-        />
-      </div>
+    <div className="px-4 py-3.5 border-b border-gray-100 dark:border-white/8 last:border-0 hover:bg-gray-50 dark:hover:bg-white/5 transition">
+      {/* Row 1: avatar · name + email · status tag */}
+      <div className="flex items-center gap-2.5">
+        <div className="relative shrink-0">
+          <AvatarBadge name={loc.userName} size={34} />
+          <span
+            className={cn(
+              "absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-white dark:border-gray-900",
+              loc.isOnline ? "bg-emerald-500" : "bg-gray-400",
+            )}
+          />
+        </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="text-[13px] font-semibold truncate">
-            {loc.userName}
-          </span>
-          {loc.flag && <span className="text-[16px]">{loc.flag}</span>}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[13px] font-semibold truncate">{loc.userName}</span>
+            {loc.flag && <span className="text-[15px] leading-none">{loc.flag}</span>}
+          </div>
+          <div className="text-[11px] text-gray-400 dark:text-gray-500 truncate">{loc.userEmail}</div>
         </div>
-        <div className="text-[11.5px] text-gray-500 dark:text-gray-400 truncate">
-          {loc.userEmail}
-        </div>
-      </div>
 
-      <div className="text-right shrink-0">
-        <div className="text-[12.5px] font-medium">
-          {loc.latitude
-            ? `${loc.city}${loc.region ? `, ${loc.region}` : ""}`
-            : "Location unknown"}
-        </div>
-        <div className="text-[11px] text-gray-400">
-          {loc.country}
-          {loc.accuracy ? ` · ±${Math.round(loc.accuracy)}m` : ""}
-        </div>
-      </div>
-
-      <div className="shrink-0 flex flex-col items-end gap-1">
-        <Tag tone={loc.isOnline ? "green" : "neutral"}>
+        <Tag tone={loc.isOnline ? "green" : "neutral"} className="shrink-0">
           {loc.isOnline ? "Online" : "Offline"}
         </Tag>
-        <span className="text-[10.5px] text-gray-400">
-          {timeAgo(loc.updatedAt)}
-        </span>
       </div>
 
-      {mapsUrl && (
-        <a
-          href={mapsUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-gray-400 hover:text-indigo-600 transition shrink-0 p-1"
-          title="Open in Google Maps"
-        >
-          <ExternalLinkIcon className="h-3.5 w-3.5" />
-        </a>
-      )}
+      {/* Row 2: pin · location string · accuracy · timestamp · map link */}
+      <div className="mt-2 ml-[46px] flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <MapPinIcon className="h-3 w-3 text-gray-400 dark:text-gray-500 shrink-0" />
+          <span className="text-[11.5px] text-gray-600 dark:text-gray-300 truncate">{locationStr}</span>
+          {loc.accuracy && (
+            <span className="text-[10.5px] text-gray-400 shrink-0">±{Math.round(loc.accuracy)}m</span>
+          )}
+        </div>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          <span className="text-[11px] text-gray-400">{timeAgo(loc.updatedAt)}</span>
+          {mapsUrl && (
+            <a
+              href={mapsUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-400 hover:text-indigo-600 transition p-0.5"
+              title="Open in Google Maps"
+            >
+              <ExternalLinkIcon className="h-3.5 w-3.5" />
+            </a>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -238,7 +238,7 @@ export function AdminLocationsPage() {
             {/* Scrollable user list */}
             <div
               className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 overflow-hidden flex flex-col"
-              style={{ maxHeight: 390 }}
+              style={{ maxHeight: 430 }}
             >
               <div className="px-4 py-3 border-b border-gray-100 dark:border-white/8 text-[12px] font-semibold text-gray-600 dark:text-gray-300">
                 Users · {locations.length}

@@ -2,6 +2,22 @@
 
 import React, { createContext, useContext, useState } from "react"
 
+const STORAGE_KEY = "meridian_nav"
+
+function readStorage(): { mode: DashboardMode; view: string } | null {
+  if (typeof window === "undefined") return null
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    return raw ? (JSON.parse(raw) as { mode: DashboardMode; view: string }) : null
+  } catch {
+    return null
+  }
+}
+
+function writeStorage(mode: DashboardMode, view: string) {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, view })) } catch { /* ignore */ }
+}
+
 export type DashboardMode = "user" | "admin"
 
 export type UserView =
@@ -60,14 +76,24 @@ export function DashboardNavProvider({
   children: React.ReactNode
   isAdmin?: boolean
 }) {
-  const [mode, setMode]               = useState<DashboardMode>("user")
-  const [view, setView]               = useState("overview")
+  const saved = readStorage()
+
+  const [mode, setModeRaw] = useState<DashboardMode>(
+    saved?.mode === "admin" && isAdmin ? "admin" : "user",
+  )
+  const [view, setViewRaw] = useState<string>(saved?.view ?? "overview")
   const [selectedUser, setSelectedUser] = useState<SelectedAdminUser | null>(null)
 
-  const handleSetMode = (newMode: DashboardMode) => {
+  function setView(newView: string) {
+    setViewRaw(newView)
+    writeStorage(mode, newView)
+  }
+
+  function handleSetMode(newMode: DashboardMode) {
     if (newMode === "admin" && !isAdmin) return
-    setMode(newMode)
-    setView("overview")
+    setModeRaw(newMode)
+    setViewRaw("overview")
+    writeStorage(newMode, "overview")
   }
 
   return (
