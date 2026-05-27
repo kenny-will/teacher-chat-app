@@ -18,6 +18,7 @@ import {
   userEditDeposit,
 } from "@/modules/financial/application/mutations/financial.mutations"
 import { CRYPTO_SYMBOLS } from "@/lib/crypto-config"
+import { SITE_TITLE } from "@/lib/site"
 
 // ─── ACH static info ─────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ const ACH_INFO = {
   speed: "1–3 business days",
   limit: "$250,000 / day",
   routing: "026009593",
-  bankName: "First Meridian Bank, N.A.",
+  bankName: `First ${SITE_TITLE} Bank, N.A.`,
   swift: "MRDNUS33",
 }
 
@@ -335,7 +336,7 @@ export function DepositPage() {
           <div className="col-span-12 lg:col-span-7 space-y-4">
 
             {/* ACH method card */}
-            <div className="rounded-2xl border border-gray-900 dark:border-white bg-gray-900 dark:bg-white p-5">
+            <div className="rounded-2xl border dark:border-gray-900 border-white darK:bg-gray-900 dark:bg-white p-5">
               <div className="flex items-center gap-3 mb-4">
                 <div className="h-9 w-9 rounded-xl bg-white/10 dark:bg-gray-900/10 grid place-items-center">
                   <BuildingIcon className="h-4.5 w-4.5 text-white dark:text-gray-900" />

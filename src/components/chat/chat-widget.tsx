@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react"
 import { MessageCircleIcon, XIcon, SendIcon, MinusIcon, BotIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SITE_TITLE } from "@/lib/site"
 import { useAuth } from "@/contexts/auth-context"
 import { firebaseReady } from "@/lib/firebase"
 import {
@@ -160,7 +161,7 @@ export function ChatWidget() {
               <BotIcon className="h-4 w-4" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold leading-tight">Meridian Support</div>
+              <div className="text-[13px] font-semibold leading-tight">{SITE_TITLE} Support</div>
               <div className="flex items-center gap-1.5 mt-0.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-[10.5px] text-white/75">

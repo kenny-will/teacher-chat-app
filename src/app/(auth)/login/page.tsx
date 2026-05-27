@@ -3,6 +3,7 @@
 import { useState, FormEvent, useEffect } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SITE_TITLE } from "@/lib/site";
 
 const OAUTH_ERRORS: Record<string, string> = {
   oauth_cancelled: "Google sign-in was cancelled.",
@@ -105,7 +106,7 @@ export default function LoginPage() {
           Welcome back
         </h1>
         <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Sign in to your Meridian account
+          Sign in to your {SITE_TITLE} account
         </p>
       </div>
 

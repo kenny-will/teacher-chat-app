@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import { SITE_TITLE } from "@/lib/site"
 
 // ─── Shared pieces ────────────────────────────────────────────────
 
@@ -111,7 +112,7 @@ export const VisaCard: React.FC<BaseProps> = ({
 
     <div className="relative flex h-full flex-col px-6 py-5">
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-semibold tracking-[0.2em] text-blue-200 uppercase mt-1">Meridian Bank</div>
+        <div className="text-[11px] font-semibold tracking-[0.2em] text-blue-200 uppercase mt-1">{SITE_TITLE} Bank</div>
         <ContactlessIcon color="rgba(255,255,255,0.7)" />
       </div>
       <div className="mt-5"><ChipIcon /></div>
@@ -159,7 +160,7 @@ export const VerveCard: React.FC<BaseProps> = ({
 
     <div className="relative flex h-full flex-col px-6 py-5">
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-semibold tracking-[0.2em] text-amber-200 uppercase mt-1">Meridian Bank</div>
+        <div className="text-[11px] font-semibold tracking-[0.2em] text-amber-200 uppercase mt-1">{SITE_TITLE} Bank</div>
         <ContactlessIcon color="rgba(255,255,255,0.75)" />
       </div>
       <div className="mt-5"><ChipIcon /></div>
@@ -201,7 +202,7 @@ export const GoldCard: React.FC<BaseProps> = ({
 
     <div className="relative flex h-full flex-col px-6 py-5">
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-semibold tracking-[0.2em] text-yellow-100 uppercase mt-1">Meridian Gold</div>
+        <div className="text-[11px] font-semibold tracking-[0.2em] text-yellow-100 uppercase mt-1">{SITE_TITLE} Gold</div>
         <ContactlessIcon color="rgba(255,255,255,0.8)" />
       </div>
       <div className="mt-5"><ChipIcon /></div>
@@ -245,7 +246,7 @@ export const BlackCard: React.FC<BaseProps> = ({
 
     <div className="relative flex h-full flex-col px-6 py-5">
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-semibold tracking-[0.25em] text-gray-400 uppercase mt-1">Meridian Infinite</div>
+        <div className="text-[11px] font-semibold tracking-[0.25em] text-gray-400 uppercase mt-1">{SITE_TITLE} Infinite</div>
         <ContactlessIcon color="rgba(255,255,255,0.4)" />
       </div>
       <div className="mt-5"><ChipIcon /></div>

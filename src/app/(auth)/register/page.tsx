@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { SITE_TITLE } from '@/lib/site'
 
 interface FieldErrors {
   name?:     string[]
@@ -99,7 +100,7 @@ export default function RegisterPage() {
           </svg>
         </div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-50">Create your account</h1>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started with Meridian today</p>
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Get started with {SITE_TITLE} today</p>
       </div>
 
       {/* Google OAuth */}

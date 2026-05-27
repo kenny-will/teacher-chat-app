@@ -230,7 +230,7 @@ function Features() {
             <em className="not-italic text-gray-400">in one place.</em>
           </h2>
           <p className="mt-4 text-[16px] text-gray-600 max-w-xl mx-auto">
-            Stop stitching together a dozen tools. Meridian is the infrastructure layer that unifies your entire financial stack.
+            Stop stitching together a dozen tools. {SITE_TITLE} is the infrastructure layer that unifies your entire financial stack.
           </p>
         </div>
 
@@ -258,7 +258,7 @@ const DEEP_DIVE_TABS = [
   {
     label: "Treasury",
     heading: "Earn yield on every dollar.",
-    body: "Meridian automatically sweeps idle balances into T-bills and government MMFs — earning 4.8% APY while keeping your cash available same-day. No lockup. No manual trades. Full audit trail.",
+    body: `${SITE_TITLE} automatically sweeps idle balances into T-bills and government MMFs — earning 4.8% APY while keeping your cash available same-day. No lockup. No manual trades. Full audit trail.`,
     stats: [
       { label: "Current APY", value: "4.82%" },
       { label: "Auto-sweep threshold", value: "$50k" },
@@ -268,7 +268,7 @@ const DEEP_DIVE_TABS = [
   {
     label: "Payments",
     heading: "Every rail. One integration.",
-    body: "From ACH and wires to RTP and FedNow, Meridian supports every payment rail in the US and 40+ countries. Build once, reach everywhere — with real-time status, webhooks, and automatic retry logic.",
+    body: `From ACH and wires to RTP and FedNow, ${SITE_TITLE} supports every payment rail in the US and 40+ countries. Build once, reach everywhere — with real-time status, webhooks, and automatic retry logic.`,
     stats: [
       { label: "Payment rails", value: "12+" },
       { label: "Settlement time", value: "<2s RTP" },
@@ -288,7 +288,7 @@ const DEEP_DIVE_TABS = [
   {
     label: "Capital",
     heading: "Grow with your revenue.",
-    body: "Meridian Capital offers working capital lines tied to your real-time transaction data — no lengthy applications, no equity dilution. Draw and repay daily, with transparent pricing.",
+    body: `${SITE_TITLE} Capital offers working capital lines tied to your real-time transaction data — no lengthy applications, no equity dilution. Draw and repay daily, with transparent pricing.`,
     stats: [
       { label: "Lines available", value: "Up to $5M" },
       { label: "Decision time", value: "<24h" },
@@ -462,7 +462,7 @@ function Testimonial() {
       <div className="mx-auto max-w-4xl px-6 text-center">
         <div className="text-[64px] text-[#1ec677]/40 font-serif leading-none mb-6">"</div>
         <blockquote className="font-display text-[26px] lg:text-[32px] leading-[1.3] tracking-tightish text-[#0e3a2a]">
-          We closed our Series B with a clean data room because Meridian had already reconciled every dollar since day one. Our auditors were done in two weeks instead of eight.
+          We closed our Series B with a clean data room because {SITE_TITLE} had already reconciled every dollar since day one. Our auditors were done in two weeks instead of eight.
         </blockquote>
         <div className="mt-8 flex items-center justify-center gap-3">
           <div className="h-10 w-10 rounded-full bg-[#0e3a2a] grid place-items-center text-white text-[12px] font-semibold">
@@ -610,7 +610,7 @@ function CtaSection() {
           <em className="not-italic text-emerald-400">2026?</em>
         </h2>
         <p className="mt-5 text-[16px] text-white/60 max-w-md mx-auto">
-          Join 1,400+ companies that have unified their financial infrastructure on Meridian.
+          Join 1,400+ companies that have unified their financial infrastructure on {SITE_TITLE}.
         </p>
         <div className="mt-8 flex items-center justify-center gap-3 flex-wrap">
           <Link
