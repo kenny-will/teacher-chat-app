@@ -4,7 +4,7 @@ import { getServerSession } from '@/shared/infrastructure/auth/session'
 import * as repo from '@/modules/financial/infrastructure/persistence/financial.repository'
 import { db } from '@/shared/infrastructure/database/client'
 import { usersTable } from '@/modules/users/infrastructure/persistence/schema'
-import { eq } from 'drizzle-orm'
+import { eq, count } from 'drizzle-orm'
 
 async function requireAdmin(): Promise<string> {
   const session = await getServerSession()
@@ -89,6 +89,40 @@ export async function adminClearUserData(userId: string): Promise<void> {
 export async function adminGetAllTransactions() {
   await requireAdmin()
   return repo.getAllTransactionsWithUsers()
+}
+
+/** Admin: change a user's role (promote/demote). */
+export async function adminChangeUserRole(
+  targetUserId: string,
+  newRole: 'viewer' | 'editor' | 'admin',
+): Promise<void> {
+  const adminId = await requireAdmin()
+  if (targetUserId === adminId) throw new Error('You cannot change your own role')
+
+  // Prevent removing the last admin
+  if (newRole !== 'admin') {
+    const [row] = await db
+      .select({ total: count() })
+      .from(usersTable)
+      .where(eq(usersTable.role, 'admin'))
+    const adminCount = row?.total ?? 0
+
+    const [target] = await db
+      .select({ role: usersTable.role })
+      .from(usersTable)
+      .where(eq(usersTable.id, targetUserId))
+      .limit(1)
+    if (!target) throw new Error('User not found')
+
+    if (target.role === 'admin' && adminCount <= 1) {
+      throw new Error('Cannot demote the last admin')
+    }
+  }
+
+  await db
+    .update(usersTable)
+    .set({ role: newRole })
+    .where(eq(usersTable.id, targetUserId))
 }
 
 /** Admin: get all users (for user management panel). */

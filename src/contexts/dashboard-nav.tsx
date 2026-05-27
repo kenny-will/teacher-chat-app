@@ -49,6 +49,7 @@ export type AdminView =
   | "audit"
   | "chat"
   | "locations"
+  | "roles"
 
 export interface SelectedAdminUser {
   id: string

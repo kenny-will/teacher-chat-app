@@ -38,6 +38,7 @@ import { AdminAuditLogPage } from "@/components/admin/audit-log";
 import { AdminChatPage } from "@/components/admin/admin-chat";
 import { AdminLocationsPage } from "@/components/admin/admin-locations";
 import { AdminAccountsPage } from "@/components/admin/admin-accounts";
+import { AdminRolesPage } from "@/components/admin/admin-roles";
 import { ChatWidget } from "@/components/chat/chat-widget";
 import { LocationTracker } from "@/components/chat/location-tracker";
 
@@ -73,6 +74,7 @@ const ADMIN_PAGES: Record<string, React.ComponentType> = {
   audit: AdminAuditLogPage,
   chat: AdminChatPage,
   locations: AdminLocationsPage,
+  roles: AdminRolesPage,
 };
 
 // ─── Content renderer ─────────────────────────────────────────────────────────

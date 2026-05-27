@@ -17,6 +17,7 @@ import {
   MoonIcon,
   ReceiptIcon,
   Settings2Icon,
+  ShieldCheckIcon,
   ShieldIcon,
   SunIcon,
   TrendingUpIcon,
@@ -73,6 +74,7 @@ const ADMIN_NAV = [
   { key: "cards", label: "Cards", icon: CreditCardIcon },
   { key: "chat", label: "Live Chat", icon: MessageCircleIcon },
   { key: "locations", label: "Live Locations", icon: MapPinIcon },
+  { key: "roles", label: "Roles", icon: ShieldCheckIcon },
 ] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
