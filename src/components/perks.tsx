@@ -1,3 +1,4 @@
+import { SITE_TITLE } from "@/lib/site";
 import React from "react";
 
 /**
@@ -25,7 +26,7 @@ const PerksPrimeLogo: React.FC<{ className?: string }> = ({ className = "" }) =>
   <svg
     viewBox="0 0 160 28"
     className={className}
-    aria-label="perks prime"
+    aria-label={`${SITE_TITLE} prime`}
     role="img"
   >
     <text
@@ -34,7 +35,7 @@ const PerksPrimeLogo: React.FC<{ className?: string }> = ({ className = "" }) =>
       fontWeight={800} fontStyle="italic" fontSize="22"
       fill="#1ec677" letterSpacing="-0.5"
     >
-      perks
+      {SITE_TITLE}
     </text>
     <circle cx="70" cy="7.5" r="2" fill="#1ec677" />
     <text

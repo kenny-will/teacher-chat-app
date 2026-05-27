@@ -1,15 +1,8 @@
+import { SITE_TITLE } from "@/lib/site";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
-/**
- * Hero — pixel-faithful recreation of Perks's hero landing.
- *
- * Requirements:
- *   • React 18+, TypeScript
- *   • Tailwind CSS (arbitrary values enabled — default in v3+)
- *   • Hanken Grotesk loaded via Google Fonts (close stand-in for Perks Sans)
- *
- */
+
 
 export interface HeroProps {
   heroSrc?: string;
@@ -263,7 +256,6 @@ export const Hero: React.FC<HeroProps> = ({
             }}
           >
             World-Class
-            {/* America&rsquo;s #1 */}
             <br />
             Banking for
             <br />
@@ -342,7 +334,7 @@ export const Hero: React.FC<HeroProps> = ({
           </form>
 
           <p className="mt-5 max-w-[640px] text-[13px] leading-relaxed text-white/85">
-            Perks is a fintech, not a bank. Optional services and products may
+            {SITE_TITLE} is a fintech, not a bank. Optional services and products may
             have fees or charges. #1 ranking based on J.D. Power survey.{" "}
             <button
               type="button"

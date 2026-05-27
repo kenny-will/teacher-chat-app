@@ -7,18 +7,18 @@ import { cn } from "@/lib/utils"
 import Hero from "./hero"
 import Perks from "./perks"
 import { LanguageSwitcher } from "@/components/google-translate"
-import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/site"
+import { SITE_TITLE } from "@/lib/site"
 
 // ─── SVG atoms (mirrored from hero.tsx for navbar) ───────────────────────────
 const PerkLogoIcon = ({ className = "" }: { className?: string }) => (
-  <svg viewBox="0 0 120 40" className={className} aria-label="Perks" role="img">
+  <svg viewBox="0 0 120 40" className={className} aria-label={SITE_TITLE} role="img">
     <text
       x="0" y="30"
       fontFamily="'Hanken Grotesk', system-ui, sans-serif"
       fontWeight={800} fontStyle="italic" fontSize="32"
       fill="#1ec677" letterSpacing="-1"
     >
-      perks
+      {SITE_TITLE}
     </text>
     <circle cx="106" cy="11" r="3" fill="#1ec677" />
   </svg>
@@ -48,18 +48,31 @@ const UserSvgIcon = ({ className = "" }: { className?: string }) => (
 
 // ─── Nav ─────────────────────────────────────────────────────────────────────
 function Navbar() {
+  const [menuOpen, setMenuOpen] = useState(false)
+
   return (
     <header className="sticky top-0 z-50 w-full bg-[#0e3a2a]/95 backdrop-blur-md border-b border-white/10">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-5 sm:px-10 lg:px-14">
         <div className="flex items-center gap-5 sm:gap-7">
+          {/* Hamburger — visible on mobile only */}
           <button
             type="button"
-            aria-label="Open menu"
-            className="grid h-8 w-8 place-items-center rounded text-white/95 hover:text-white"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen((o) => !o)}
+            className="md:hidden grid h-8 w-8 place-items-center rounded text-white/95 hover:text-white"
           >
-            <MenuSvgIcon className="h-6 w-6" />
+            {menuOpen ? (
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.4} strokeLinecap="round" className="h-6 w-6" aria-hidden="true">
+                <line x1="5" y1="5" x2="19" y2="19" />
+                <line x1="19" y1="5" x2="5" y2="19" />
+              </svg>
+            ) : (
+              <MenuSvgIcon className="h-6 w-6" />
+            )}
           </button>
           <PerkLogoIcon className="h-8 w-auto sm:h-9" />
+          {/* Desktop nav */}
           <nav className="hidden md:flex items-center gap-6 text-[13.5px] text-white/70">
             <a href="#features" className="hover:text-white transition">Product</a>
             <a href="#pricing" className="hover:text-white transition">Pricing</a>
@@ -72,7 +85,7 @@ function Navbar() {
           <LanguageSwitcher variant="landing" />
           <Link
             href="/dashboard"
-            className="rounded-full bg-emerald-400 px-5 py-2.5 text-[15px] font-semibold text-emerald-950 transition-colors hover:bg-emerald-300 sm:px-6"
+            className="rounded-full bg-emerald-400 px-5 py-2.5 text-[13px] sm:text-[15px] font-semibold text-emerald-950 transition-colors hover:bg-emerald-300 sm:px-6"
           >
             Get started
           </Link>
@@ -85,6 +98,38 @@ function Navbar() {
           </Link>
         </div>
       </div>
+
+      {/* Mobile menu drawer */}
+      {menuOpen && (
+        <div className="md:hidden border-t border-white/10 bg-[#0e3a2a] px-5 py-4 flex flex-col gap-1">
+          {[
+            { label: "Product", href: "#features" },
+            { label: "Pricing", href: "#pricing" },
+            { label: "Docs", href: "#" },
+            { label: "Blog", href: "#" },
+            { label: "Company", href: "#" },
+          ].map((item) => (
+            <a
+              key={item.label}
+              href={item.href}
+              onClick={() => setMenuOpen(false)}
+              className="py-2.5 px-2 text-[15px] text-white/70 hover:text-white transition rounded-lg hover:bg-white/5"
+            >
+              {item.label}
+            </a>
+          ))}
+          <div className="mt-2 pt-3 border-t border-white/10">
+            <Link
+              href="/dashboard"
+              onClick={() => setMenuOpen(false)}
+              className="flex items-center gap-2 py-2.5 px-2 text-[15px] font-semibold text-white hover:text-emerald-100 transition"
+            >
+              <UserSvgIcon className="h-5 w-5" />
+              Log in
+            </Link>
+          </div>
+        </div>
+      )}
     </header>
   )
 }
@@ -104,7 +149,7 @@ function HeroDashboardPreview() {
       </div>
 
       {/* KPI strip */}
-      <div className="grid grid-cols-4 gap-3 p-4 border-b border-gray-100">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-4 border-b border-gray-100">
         {[
           { label: "Balance", value: "$2.48M", delta: "+4.2%", color: "#1ec677" },
           { label: "Monthly inflow", value: "$842k", delta: "+12.4%", color: "#10B981" },
@@ -225,7 +270,7 @@ function Features() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="text-center mb-16">
           <div className="text-[11.5px] uppercase tracking-[0.14em] text-[#1ec677] font-medium mb-3">The platform</div>
-          <h2 className="font-display text-[42px] lg:text-[52px] leading-[1.08] tracking-tighter2 text-gray-900">
+          <h2 className="font-display text-[28px] sm:text-[36px] lg:text-[52px] leading-[1.08] tracking-tighter2 text-gray-900">
             Everything your finance team needs,{" "}
             <em className="not-italic text-gray-400">in one place.</em>
           </h2>
@@ -306,20 +351,20 @@ function DeepDive() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="text-center mb-14">
           <div className="text-[11.5px] uppercase tracking-[0.14em] text-emerald-400 font-medium mb-3">Deep dive</div>
-          <h2 className="font-display text-[42px] lg:text-[52px] leading-[1.08] tracking-tighter2 text-white">
+          <h2 className="font-display text-[28px] sm:text-[38px] lg:text-[52px] leading-[1.08] tracking-tighter2 text-white">
             Built for the whole finance stack.
           </h2>
         </div>
 
         {/* Tab bar */}
         <div className="flex justify-center mb-12">
-          <div className="inline-flex rounded-xl bg-white/5 border border-white/10 p-1 gap-1">
+          <div className="flex flex-wrap justify-center rounded-xl bg-white/5 border border-white/10 p-1 gap-1">
             {DEEP_DIVE_TABS.map((t, i) => (
               <button
                 key={t.label}
                 onClick={() => setActive(i)}
                 className={cn(
-                  "px-5 h-9 rounded-lg text-[13.5px] font-medium transition",
+                  "px-3 sm:px-5 h-9 rounded-lg text-[13px] sm:text-[13.5px] font-medium transition",
                   i === active
                     ? "bg-[#1ec677] text-emerald-950 shadow-[0_0_0_1px_rgba(30,198,119,.4)]"
                     : "text-white/50 hover:text-white/80"
@@ -338,7 +383,7 @@ function DeepDive() {
               {tab.heading}
             </h3>
             <p className="text-[15px] text-white/60 leading-relaxed mb-8">{tab.body}</p>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {tab.stats.map((s) => (
                 <div key={s.label} className="rounded-xl border border-white/10 bg-white/5 p-4">
                   <div className="text-[11px] text-white/40 mb-1">{s.label}</div>
@@ -443,7 +488,7 @@ function MetricsStrip() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
           {METRICS.map((m) => (
             <div key={m.label} className="text-center">
-              <div className="font-display text-[48px] lg:text-[56px] leading-none tracking-tighter2 text-[#0e3a2a]">
+              <div className="font-display text-[32px] sm:text-[42px] lg:text-[56px] leading-none tracking-tighter2 text-[#0e3a2a]">
                 {m.value}
               </div>
               <div className="mt-2 text-[13.5px] text-[#0e3a2a]/60">{m.label}</div>
@@ -461,7 +506,7 @@ function Testimonial() {
     <section className="py-24 bg-[#e8efe9]">
       <div className="mx-auto max-w-4xl px-6 text-center">
         <div className="text-[64px] text-[#1ec677]/40 font-serif leading-none mb-6">"</div>
-        <blockquote className="font-display text-[26px] lg:text-[32px] leading-[1.3] tracking-tightish text-[#0e3a2a]">
+        <blockquote className="font-display text-[20px] sm:text-[24px] lg:text-[32px] leading-[1.3] tracking-tightish text-[#0e3a2a]">
           We closed our Series B with a clean data room because {SITE_TITLE} had already reconciled every dollar since day one. Our auditors were done in two weeks instead of eight.
         </blockquote>
         <div className="mt-8 flex items-center justify-center gap-3">
@@ -535,7 +580,7 @@ function Pricing() {
       <div className="mx-auto max-w-7xl px-6">
         <div className="text-center mb-14">
           <div className="text-[11.5px] uppercase tracking-[0.14em] text-[#1ec677] font-medium mb-3">Pricing</div>
-          <h2 className="font-display text-[42px] lg:text-[52px] leading-[1.08] tracking-tighter2 text-gray-900">
+          <h2 className="font-display text-[28px] sm:text-[36px] lg:text-[52px] leading-[1.08] tracking-tighter2 text-gray-900">
             Transparent pricing. No surprises.
           </h2>
           <p className="mt-4 text-[16px] text-gray-600">
@@ -605,7 +650,7 @@ function CtaSection() {
   return (
     <section className="py-24 bg-[#062b1a]">
       <div className="mx-auto max-w-3xl px-6 text-center">
-        <h2 className="font-display text-[42px] lg:text-[56px] leading-[1.06] tracking-tighter2 text-white">
+        <h2 className="font-display text-[28px] sm:text-[36px] lg:text-[56px] leading-[1.06] tracking-tighter2 text-white">
           Ready to move money like it&apos;s{" "}
           <em className="not-italic text-emerald-400">2026?</em>
         </h2>
@@ -655,17 +700,17 @@ function Footer() {
   return (
     <footer className="bg-[#062b1a] border-t border-white/[0.08]">
       <div className="mx-auto max-w-7xl px-6 py-16">
-        <div className="grid grid-cols-2 lg:grid-cols-6 gap-10">
-          <div className="col-span-2">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-6 gap-10">
+          <div className="col-span-2 sm:col-span-2">
             <div className="mb-4">
-              <svg viewBox="0 0 120 40" className="h-8 w-auto" aria-label="Perks" role="img">
+              <svg viewBox="0 0 120 40" className="h-8 w-auto" aria-label={SITE_TITLE} role="img">
                 <text
                   x="0" y="30"
                   fontFamily="'Hanken Grotesk', system-ui, sans-serif"
                   fontWeight={800} fontStyle="italic" fontSize="32"
                   fill="#1ec677" letterSpacing="-1"
                 >
-                  perks
+                  {SITE_TITLE}
                 </text>
                 <circle cx="106" cy="11" r="3" fill="#1ec677" />
               </svg>
