@@ -148,12 +148,12 @@ export function ChatWidget() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3">
+    <div className="fixed bottom-4 right-3 sm:bottom-5 sm:right-5 z-50 flex flex-col items-end gap-3">
       {/* Chat panel */}
       {open && (
         <div className={cn(
-          "w-[360px] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/15 bg-white dark:bg-gray-900 flex flex-col overflow-hidden transition-all duration-200",
-          minimized ? "h-14" : "h-[520px]"
+          "w-[calc(100vw-24px)] sm:w-[360px] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/15 bg-white dark:bg-gray-900 flex flex-col overflow-hidden transition-all duration-200",
+          minimized ? "h-14" : "h-[min(520px,calc(100dvh-100px))]"
         )}>
           {/* Header */}
           <div className="flex items-center gap-3 px-4 py-3 bg-indigo-600 text-white shrink-0">

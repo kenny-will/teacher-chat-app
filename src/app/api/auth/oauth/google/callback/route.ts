@@ -14,6 +14,11 @@ import {
   COOKIE_NAME,
   SESSION_DURATION_DAYS_EXPORT,
 } from "@/shared/infrastructure/auth/token";
+import { buildDefaultCards } from "@/modules/auth/application/use-cases/register.use-case";
+import { insertCard } from "@/modules/financial/infrastructure/persistence/financial.repository";
+import { logger } from "@/shared/infrastructure/logger/logger";
+
+const log = logger.child({ module: "oauth-callback" });
 
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v3/userinfo";
@@ -113,6 +118,16 @@ export async function GET(req: NextRequest) {
     const saveResult = await userRepo.save(newUser);
     if (!saveResult.success) return loginError(req, "oauth_save_user");
     user = saveResult.data;
+
+    // Provision default card suite for new Google users (best-effort)
+    try {
+      const cards = buildDefaultCards(user.id, googleUser.name);
+      for (const card of cards) {
+        await insertCard(card);
+      }
+    } catch (cardError) {
+      log.warn({ cardError, userId: user.id }, "Default card creation failed — user still created");
+    }
   }
 
   if (user.status.value === "suspended") {

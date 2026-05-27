@@ -830,7 +830,7 @@ function RecentTransactions() {
                 : "No transactions yet"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center gap-2">
           <Button variant="outline" size="sm" className="gap-1.5">
             <FilterIcon className="h-3.5 w-3.5" />
             Filter
@@ -954,7 +954,7 @@ function DepositWithdrawalPreview() {
     : "…";
 
   return (
-    <div className="col-span-12 lg:col-span-8 grid grid-cols-2 gap-4">
+    <div className="col-span-12 lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
       {/* Deposit summary */}
       <div className="rounded-2xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 p-5">
         <SectionHeader

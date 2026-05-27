@@ -280,7 +280,7 @@ export function DepositPage() {
         title="Deposit."
         subtitle="ACH bank transfers — receive funds directly into your account."
         actions={
-          <>
+          <div className="flex flex-col gap-2 sm:flex-row items-center">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={refetch}>
               <RefreshCwIcon className="h-3.5 w-3.5" />Refresh
             </Button>
@@ -290,7 +290,7 @@ export function DepositPage() {
             }}>
               <ArrowDownLeftIcon className="h-3.5 w-3.5" />New deposit
             </Button>
-          </>
+          </div>
         }
       />
 

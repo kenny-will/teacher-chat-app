@@ -145,7 +145,7 @@ function ProfilePanel() {
         subtitle="Personal details visible to your team"
       />
       <div className="mt-4 grid grid-cols-2 gap-4">
-        <div className="col-span-2 flex items-center gap-4">
+        <div className="col-span-2 flex flex-col sm:flex-row items-center gap-4">
           {user.avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
@@ -176,7 +176,7 @@ function ProfilePanel() {
             <div className="text-[11.5px] text-gray-500 dark:text-gray-400 mb-1">
               {label}
             </div>
-            <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 flex items-center text-[13px]">
+            <div className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 flex items-center text-[13px] overflow-hidden">
               {val}
             </div>
           </div>

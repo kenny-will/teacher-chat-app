@@ -87,14 +87,14 @@ export function TransactionsPage() {
         title="Transactions."
         subtitle="Every dollar in and out — across all accounts and rails."
         actions={
-          <>
+          <div className="flex flex-col gap-2 sm:flex-row items-center">
             <Button variant="outline" size="sm" className="gap-1.5" onClick={refetch}>
               <RefreshCwIcon className="h-3.5 w-3.5" />Refresh
             </Button>
             <Button variant="outline" size="sm" className="gap-1.5">
               <DownloadIcon className="h-3.5 w-3.5" />Export
             </Button>
-          </>
+          </div>
         }
       />
 

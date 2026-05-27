@@ -10,9 +10,89 @@ import { db } from '@/shared/infrastructure/database/client'
 import { userCredentialsTable } from '@/modules/auth/infrastructure/persistence/schema'
 import { logger } from '@/shared/infrastructure/logger/logger'
 import { insertCard } from '@/modules/financial/infrastructure/persistence/financial.repository'
+import type { NewUserCard } from '@/modules/financial/infrastructure/persistence/schema'
 
-// ─── Default card issued to every new user ───────────────────────────────────
-const DEFAULT_CARD_ACTIVATION_FEE = '1500' // $1500 one-time activation fee
+/** Build the default card set issued to every new user at registration. */
+export function buildDefaultCards(userId: string, holderName: string): NewUserCard[] {
+  const now = new Date()
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const yy = (addYears: number) => String((now.getFullYear() + addYears) % 100).padStart(2, '0')
+
+  return [
+    {
+      userId,
+      label:         'Primary',
+      cardUser:      holderName,
+      lastFour:      '0001',
+      network:       'Mastercard',
+      cardVariant:   'debit',
+      number:        '5412 0000 0000 0001',
+      validThru:     `${mm}/${yy(4)}`,
+      limitAmount:   '5000',
+      spentAmount:   '0',
+      activationFee: '0',       // Primary card is always free
+      isActivated:   false,
+      cardType:      'physical',
+      status:        'active',
+      isOwnerCard:   true,
+      sortOrder:     0,
+    },
+    {
+      userId,
+      label:         'Virtual',
+      cardUser:      holderName,
+      lastFour:      '0002',
+      network:       'Visa',
+      cardVariant:   'debit',
+      number:        '4111 0000 0000 0002',
+      validThru:     `${mm}/${yy(3)}`,
+      limitAmount:   '2000',
+      spentAmount:   '0',
+      activationFee: '1.50',
+      isActivated:   false,
+      cardType:      'virtual',
+      status:        'active',
+      isOwnerCard:   false,
+      sortOrder:     1,
+    },
+    {
+      userId,
+      label:         'Premium',
+      cardUser:      holderName,
+      lastFour:      '0003',
+      network:       'Mastercard Gold',
+      cardVariant:   'credit',
+      number:        '5500 0000 0000 0003',
+      validThru:     `${mm}/${yy(5)}`,
+      limitAmount:   '10000',
+      spentAmount:   '0',
+      activationFee: '4.99',
+      isActivated:   false,
+      cardType:      'physical',
+      status:        'active',
+      isOwnerCard:   false,
+      sortOrder:     2,
+    },
+    {
+      userId,
+      label:         'Business',
+      cardUser:      holderName,
+      lastFour:      '0004',
+      network:       'Visa',
+      cardVariant:   'credit',
+      number:        '4000 0000 0000 0004',
+      validThru:     `${mm}/${yy(3)}`,
+      limitAmount:   '3000',
+      spentAmount:   '0',
+      activationFee: '2.50',
+      isActivated:   false,
+      cardType:      'virtual',
+      status:        'active',
+      isOwnerCard:   false,
+      sortOrder:     3,
+    },
+  ]
+}
 
 const log = logger.child({ module: 'register-use-case' })
 
@@ -88,26 +168,12 @@ export class RegisterUseCase {
       return err(new Error('Failed to create account', { cause: error }))
     }
 
-    // 7. Issue default Mastercard (best-effort — never blocks registration)
+    // 7. Issue default card suite (best-effort — never blocks registration)
     try {
-      await insertCard({
-        userId:         saveResult.data.id,
-        label:          'Primary',
-        cardUser:       input.name.trim(),
-        lastFour:       '0000',
-        network:        'Mastercard',
-        cardVariant:    'debit',
-        number:         '5412 0000 0000 0000',
-        validThru:      '01/31',
-        limitAmount:    '5000',
-        spentAmount:    '0',
-        activationFee:  DEFAULT_CARD_ACTIVATION_FEE, 
-        isActivated:    false,
-        cardType:       'physical',
-        status:         'active',
-        isOwnerCard:    true,
-        sortOrder:      0,
-      })
+      const cards = buildDefaultCards(saveResult.data.id, input.name.trim())
+      for (const card of cards) {
+        await insertCard(card)
+      }
     } catch (cardError) {
       log.warn({ cardError, userId: saveResult.data.id }, 'Default card creation failed — user still created')
     }

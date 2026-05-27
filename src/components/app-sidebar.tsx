@@ -56,12 +56,10 @@ const USER_NAV = [
     key: "transactions",
     label: "Transactions",
     icon: ReceiptIcon,
-    badge: "248",
   },
   { key: "deposit", label: "Deposit", icon: ArrowDownLeftIcon },
   { key: "withdrawal", label: "Withdrawal", icon: ArrowUpRightIcon },
   { key: "cards", label: "Cards", icon: CreditCardIcon, badge: "6" },
-  { key: "invest",    label: "Invest",    icon: TrendingUpIcon },
   { key: "settings",  label: "Settings",  icon: Settings2Icon  },
 ] as const;
 
@@ -238,23 +236,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Footer ── */}
       <SidebarFooter>
         <div className="space-y-3 p-1">
-          {/* APY teaser — user mode only */}
-          {mode === "user" && (
-            <div className="rounded-xl bg-gray-900 dark:bg-white/8 dark:border dark:border-white/10 text-white p-3 relative overflow-hidden">
-              <div className="absolute -right-6 -top-6 h-20 w-20 rounded-full bg-blue-500/40 blur-2xl pointer-events-none" />
-              <div className="relative">
-                <div className="text-[10.5px] uppercase tracking-widest text-gray-400">
-                  Earning
-                </div>
-                <div className="text-[22px] font-semibold leading-none tracking-tight mt-1">
-                  5.21% APY
-                </div>
-                <div className="text-[11px] text-white/60 mt-1">
-                  $842k swept · 14d
-                </div>
-              </div>
-            </div>
-          )}
+         
 
           {/* Mode switcher — admins only */}
           {isAdmin && (
