@@ -27,11 +27,11 @@ const RECENTS = [
 const RAILS = ["ACH", "Wire", "RTP"] as const
 
 const CRYPTO_NETWORKS = [
-  { id: "btc",      symbol: "BTC",  name: "Bitcoin",       badge: "₿", badgeColor: "bg-orange-500", fee: "~0.00012 BTC", feeUsd: "~$8.40",  time: "~20 min", placeholder: "bc1q…",  usdRate: 70000 },
-  { id: "eth",      symbol: "ETH",  name: "Ethereum",      badge: "Ξ", badgeColor: "bg-indigo-500", fee: "~0.0024 ETH",  feeUsd: "~$8.40",  time: "~2 min",  placeholder: "0x…",   usdRate: 3500  },
-  { id: "trx",      symbol: "TRX",  name: "Tron",          badge: "T", badgeColor: "bg-red-500",    fee: "1 TRX",        feeUsd: "~$0.15",  time: "~1 min",  placeholder: "T…",    usdRate: 0.152 },
-  { id: "usdt_trx", symbol: "USDT", name: "USDT (TRC-20)", badge: "₮", badgeColor: "bg-teal-500",   fee: "1 TRX bw",     feeUsd: "~$0.15",  time: "~1 min",  placeholder: "T…",    usdRate: 1     },
-  { id: "usdt_eth", symbol: "USDT", name: "USDT (ERC-20)", badge: "₮", badgeColor: "bg-teal-700",   fee: "~12 USDT gas", feeUsd: "~$12.00", time: "~2 min",  placeholder: "0x…",   usdRate: 1     },
+  { id: "btc",      symbol: "BTC",  name: "Bitcoin",       img: "/img/bitcoin.png",  fee: "~0.00012 BTC", feeUsd: "~$8.40",  time: "~20 min", placeholder: "bc1q…",  usdRate: 70000 },
+  { id: "eth",      symbol: "ETH",  name: "Ethereum",      img: "/img/ethereum.png", fee: "~0.0024 ETH",  feeUsd: "~$8.40",  time: "~2 min",  placeholder: "0x…",   usdRate: 3500  },
+  { id: "trx",      symbol: "TRX",  name: "Tron",          img: "/img/trx.png",      fee: "1 TRX",        feeUsd: "~$0.15",  time: "~1 min",  placeholder: "T…",    usdRate: 0.152 },
+  { id: "usdt_trx", symbol: "USDT", name: "USDT (TRC-20)", img: "/img/usdt-trx.png", fee: "1 TRX bw",     feeUsd: "~$0.15",  time: "~1 min",  placeholder: "T…",    usdRate: 1     },
+  { id: "usdt_eth", symbol: "USDT", name: "USDT (ERC-20)", img: "/img/usdt-eth.png", fee: "~12 USDT gas", feeUsd: "~$12.00", time: "~2 min",  placeholder: "0x…",   usdRate: 1     },
 ] as const
 
 const SAVED_WALLETS = [
@@ -43,25 +43,15 @@ const SAVED_WALLETS = [
 
 // ─── Helpers ─────────────────────────────────────────────────────
 
-const CRYPTO_IMG: Record<string, string> = {
-  btc: "/img/bitcoin.png", eth: "/img/ethereum.png", trx: "/img/trx.png",
-  usdt_trx: "/img/usdt-trx.png", usdt_eth: "/img/usdt-eth.png",
-}
-
 function NetworkBadge({ net, size = 20 }: { net: typeof CRYPTO_NETWORKS[number]; size?: number }) {
-  const src = CRYPTO_IMG[net.id]
-  if (src) {
-    return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img src={src} alt={net.symbol} width={size} height={size}
-        style={{ borderRadius: "50%", objectFit: "contain", flexShrink: 0 }} />
-    )
-  }
   return (
-    <span className={cn("inline-flex items-center justify-center rounded-full text-white font-bold shrink-0", net.badgeColor)}
-      style={{ width: size, height: size, fontSize: size * 0.42 }}>
-      {net.badge}
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={net.img}
+      alt={net.name}
+      className="rounded-full shrink-0 object-cover"
+      style={{ width: size, height: size }}
+    />
   )
 }
 

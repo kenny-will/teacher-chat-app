@@ -34,27 +34,27 @@ const ACH_INFO = {
 
 const CRYPTO_NETWORKS = [
   {
-    id: "btc",    symbol: "BTC",  name: "Bitcoin",       badge: "₿", badgeColor: "bg-orange-500",
+    id: "btc",    symbol: "BTC",  name: "Bitcoin",       img: "/img/bitcoin.png",
     address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
     minDeposit: "0.0001 BTC",  confirmations: "2 confirmations (~20 min)", fee: "Network fee only", network: "Bitcoin Network",
   },
   {
-    id: "eth",    symbol: "ETH",  name: "Ethereum",      badge: "Ξ", badgeColor: "bg-indigo-500",
+    id: "eth",    symbol: "ETH",  name: "Ethereum",      img: "/img/ethereum.png",
     address: "0x742d35Cc6634C0532925a3b8D4C9b5e2B4f3a1d",
     minDeposit: "0.001 ETH",   confirmations: "12 confirmations (~2 min)", fee: "Gas fee only", network: "Ethereum Mainnet",
   },
   {
-    id: "trx",    symbol: "TRX",  name: "Tron",          badge: "T", badgeColor: "bg-red-500",
+    id: "trx",    symbol: "TRX",  name: "Tron",          img: "/img/trx.png",
     address: "TJYeasTPa1GDdSqFmJFn9BGKwqrNW8k6eJ",
     minDeposit: "10 TRX",      confirmations: "20 confirmations (~1 min)", fee: "1 TRX", network: "Tron Network",
   },
   {
-    id: "usdt_trx", symbol: "USDT", name: "USDT (TRC-20)", badge: "₮", badgeColor: "bg-teal-500",
+    id: "usdt_trx", symbol: "USDT", name: "USDT (TRC-20)", img: "/img/usdt-trx.png",
     address: "TJYeasTPa1GDdSqFmJFn9BGKwqrNW8k6eJ",
     minDeposit: "1 USDT",      confirmations: "20 confirmations (~1 min)", fee: "1 TRX bandwidth", network: "Tron Network (TRC-20)",
   },
   {
-    id: "usdt_eth", symbol: "USDT", name: "USDT (ERC-20)", badge: "₮", badgeColor: "bg-teal-700",
+    id: "usdt_eth", symbol: "USDT", name: "USDT (ERC-20)", img: "/img/usdt-eth.png",
     address: "0x742d35Cc6634C0532925a3b8D4C9b5e2B4f3a1d",
     minDeposit: "10 USDT",     confirmations: "12 confirmations (~2 min)", fee: "Gas fee only", network: "Ethereum Mainnet (ERC-20)",
   },
@@ -64,12 +64,13 @@ const CRYPTO_NETWORKS = [
 
 function NetworkBadge({ net, size = 20 }: { net: typeof CRYPTO_NETWORKS[number]; size?: number }) {
   return (
-    <span
-      className={cn("inline-flex items-center justify-center rounded-full text-white font-bold shrink-0", net.badgeColor)}
-      style={{ width: size, height: size, fontSize: size * 0.42 }}
-    >
-      {net.badge}
-    </span>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={net.img}
+      alt={net.name}
+      className="rounded-full shrink-0 object-cover"
+      style={{ width: size, height: size }}
+    />
   )
 }
 
