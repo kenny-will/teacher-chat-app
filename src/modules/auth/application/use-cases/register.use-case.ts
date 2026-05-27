@@ -20,7 +20,7 @@ export function buildDefaultCards(
   const now = new Date();
   const mm = String(now.getMonth() + 1).padStart(2, "0");
   const yy = String((now.getFullYear() + 4) % 100).padStart(2, "0");
-  const activationFee = process.env.ACTIVATION_FEE ?? "5.00";
+  const activationFee = process.env.NEXT_PUBLIC_ACTIVATION_FEE ?? "5.00";
 
   return [
     {
@@ -32,7 +32,7 @@ export function buildDefaultCards(
       cardVariant: "debit",
       number: "5412 0000 0000 0001",
       validThru: `${mm}/${yy}`,
-      limitAmount: "5000",
+      limitAmount: "5000000",
       spentAmount: "0",
       activationFee,
       isActivated: false,

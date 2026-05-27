@@ -85,6 +85,8 @@ export function LanguageSwitcher({ variant = "dashboard" }: LanguageSwitcherProp
 
   const lang = LANGUAGES.find((l) => l.code === current) ?? LANGUAGES[0]
 
+  const isDashboard = variant === "dashboard"
+
   // ── Landing variant ────────────────────────────────────────────
 
   // if (variant === "landing") {

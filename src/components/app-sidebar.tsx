@@ -258,14 +258,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
           )}
 
-          {!isAdmin && (
-            <div className="rounded-xl border border-gray-200 dark:border-white/10 px-3 py-2 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-indigo-500 shrink-0" />
-              <span className="text-[11.5px] text-gray-600 dark:text-gray-400 capitalize">
-                {roleLabel(user.role)} access
-              </span>
-            </div>
-          )}
+        
 
           {/* User profile */}
           <div className="flex items-center gap-2.5 px-1">
