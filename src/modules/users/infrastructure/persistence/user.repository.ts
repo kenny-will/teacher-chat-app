@@ -120,6 +120,7 @@ export class DrizzleUserRepository implements IUserRepository {
           role: plain.role,
           status: plain.status,
           lastLoginAt: plain.lastLoginAt,
+          accountNumber: plain.accountNumber,
         })
         .onConflictDoUpdate({
           target: usersTable.id,

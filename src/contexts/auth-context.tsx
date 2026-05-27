@@ -3,12 +3,13 @@
 import { createContext, useContext } from 'react'
 
 export interface AuthUser {
-  id:          string
-  name:        string
-  email:       string
-  role:        string
-  avatarUrl:   string | null
-  lastLoginAt: string | null
+  id:            string
+  name:          string
+  email:         string
+  role:          string
+  avatarUrl:     string | null
+  lastLoginAt:   string | null
+  accountNumber: string | null
 }
 
 const AuthContext = createContext<AuthUser | null>(null)

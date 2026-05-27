@@ -12,6 +12,7 @@ export const usersTable = pgTable(
     avatarUrl: varchar('avatar_url', { length: 500 }),
     role: userRoleEnum('role').notNull().default('viewer'),
     status: userStatusEnum('status').notNull().default('active'),
+    accountNumber: varchar('account_number', { length: 10 }).unique(),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),

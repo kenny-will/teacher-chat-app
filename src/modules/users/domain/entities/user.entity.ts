@@ -12,6 +12,7 @@ interface UserEntityProps extends EntityProps {
   role: UserRole
   status: UserStatus
   lastLoginAt: Date | null
+  accountNumber: string | null
 }
 
 /** User aggregate root. All state changes go through this class. */
@@ -36,6 +37,7 @@ export class UserEntity extends AggregateRoot<UserEntityProps> {
   get role(): UserRole { return this.props.role }
   get status(): UserStatus { return this.props.status }
   get lastLoginAt(): Date | null { return this.props.lastLoginAt }
+  get accountNumber(): string | null { return this.props.accountNumber }
 
   /**
    * Changes the user's role and records a domain event.
@@ -76,6 +78,7 @@ export class UserEntity extends AggregateRoot<UserEntityProps> {
     role: UserRoleValue
     status: UserStatusValue
     lastLoginAt: Date | null
+    accountNumber: string | null
     createdAt: Date | undefined
     updatedAt: Date | undefined
   } {
@@ -87,6 +90,7 @@ export class UserEntity extends AggregateRoot<UserEntityProps> {
       role: this.props.role.value,
       status: this.props.status.value,
       lastLoginAt: this.props.lastLoginAt,
+      accountNumber: this.props.accountNumber,
       createdAt: this.props.createdAt,
       updatedAt: this.props.updatedAt,
     }

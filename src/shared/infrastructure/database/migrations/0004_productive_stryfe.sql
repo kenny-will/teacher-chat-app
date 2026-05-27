@@ -1,6 +1,6 @@
-ALTER TABLE "user_cards" ADD COLUMN "network" varchar(100) DEFAULT 'Mastercard' NOT NULL;--> statement-breakpoint
-ALTER TABLE "user_cards" ADD COLUMN "card_variant" varchar(50) DEFAULT 'debit' NOT NULL;--> statement-breakpoint
-ALTER TABLE "user_cards" ADD COLUMN "number" varchar(30) DEFAULT '0000 0000 0000 0000' NOT NULL;--> statement-breakpoint
-ALTER TABLE "user_cards" ADD COLUMN "valid_thru" varchar(10) DEFAULT '01/28' NOT NULL;--> statement-breakpoint
-ALTER TABLE "user_cards" ADD COLUMN "activation_fee" numeric(10, 2) DEFAULT '0' NOT NULL;--> statement-breakpoint
-ALTER TABLE "user_cards" ADD COLUMN "is_activated" boolean DEFAULT true NOT NULL;
+-- ALTER TABLE "user_cards" ADD COLUMN "network" varchar(100) DEFAULT 'Mastercard' NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "user_cards" ADD COLUMN "card_variant" varchar(50) DEFAULT 'debit' NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "user_cards" ADD COLUMN "number" varchar(30) DEFAULT '0000 0000 0000 0000' NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "user_cards" ADD COLUMN "valid_thru" varchar(10) DEFAULT '01/28' NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "user_cards" ADD COLUMN "activation_fee" numeric(10, 2) DEFAULT '0' NOT NULL;--> statement-breakpoint
+-- ALTER TABLE "user_cards" ADD COLUMN "is_activated" boolean DEFAULT true NOT NULL;

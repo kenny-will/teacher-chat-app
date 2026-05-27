@@ -46,6 +46,11 @@ export function buildDefaultCards(
 
 const log = logger.child({ module: "register-use-case" });
 
+/** Generates a unique 10-digit bank account number (1000000000–9999999999). */
+export function generateAccountNumber(): string {
+  return String(Math.floor(Math.random() * 9_000_000_000) + 1_000_000_000);
+}
+
 export interface RegisterInput {
   name: string;
   email: string;
@@ -101,6 +106,7 @@ export class RegisterUseCase {
       role: roleResult.data,
       status: statusResult.data,
       lastLoginAt: null,
+      accountNumber: generateAccountNumber(),
     });
 
     // 5. Persist user first, then credentials (FK constraint order)

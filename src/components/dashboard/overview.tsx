@@ -145,9 +145,23 @@ const PAGE_NAV_CONFIG = [
 
 // ─── BalanceCard ──────────────────────────────────────────────────
 
+function fmtAcctNo(n: string | null): string {
+  if (!n) return "—"
+  return `${n.slice(0, 4)} ${n.slice(4, 7)} ${n.slice(7)}`
+}
+
 function BalanceCard() {
   const [period, setPeriod] = useState<Period>("1M");
+  const [copied, setCopied] = useState(false);
+  const user = useAuth();
   const { data: overview, isLoading } = useServerData(queryBalanceOverview);
+
+  function copyAcctNo() {
+    if (!user.accountNumber) return
+    navigator.clipboard.writeText(user.accountNumber).catch(() => {})
+    setCopied(true)
+    setTimeout(() => setCopied(false), 1500)
+  }
 
   if (isLoading) {
     return (
@@ -199,6 +213,20 @@ function BalanceCard() {
             + ${parseFloat(overview.balanceChangeAmount).toLocaleString()} over
             the last 30 days
           </div>
+          {/* Account number */}
+          <button
+            onClick={copyAcctNo}
+            title={copied ? "Copied!" : "Copy account number"}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-3 py-1.5 hover:border-gray-300 dark:hover:border-white/20 transition group"
+          >
+            <span className="text-[10.5px] text-gray-400 dark:text-gray-500 uppercase tracking-widest font-medium">Acct No.</span>
+            <span className="text-[13px] font-mono font-semibold tracking-wider text-gray-800 dark:text-gray-100">
+              {fmtAcctNo(user.accountNumber)}
+            </span>
+            <span className="text-[10.5px] text-gray-400 dark:text-gray-500 group-hover:text-indigo-500 transition">
+              {copied ? "✓" : "⎘"}
+            </span>
+          </button>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <div className="inline-flex rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent p-1">

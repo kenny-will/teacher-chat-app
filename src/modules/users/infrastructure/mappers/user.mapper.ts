@@ -29,6 +29,7 @@ export class UserMapper {
       role: roleResult.data,
       status: statusResult.data,
       lastLoginAt: row.lastLoginAt ?? null,
+      accountNumber: row.accountNumber ?? null,
       createdAt: row.createdAt,
       updatedAt: row.updatedAt,
     })
@@ -44,6 +45,7 @@ export class UserMapper {
       role: user.role.value,
       status: user.status.value,
       lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+      accountNumber: user.accountNumber,
       createdAt: user.createdAt?.toISOString() ?? null,
     }
   }

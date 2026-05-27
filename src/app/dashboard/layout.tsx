@@ -21,6 +21,7 @@ export default async function DashboardLayout({
     role: user.role.value as string,
     avatarUrl: user.avatarUrl,
     lastLoginAt: user.lastLoginAt?.toISOString() ?? null,
+    accountNumber: user.accountNumber,
   };
 
   return <AuthProvider user={serializedUser}>{children}</AuthProvider>;

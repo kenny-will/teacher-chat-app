@@ -1,185 +1,185 @@
-CREATE TYPE "public"."account_status_enum" AS ENUM('active', 'earning', 'pending');--> statement-breakpoint
-CREATE TYPE "public"."card_status_enum" AS ENUM('active', 'frozen', 'limit_hit');--> statement-breakpoint
-CREATE TYPE "public"."card_type_enum" AS ENUM('virtual', 'physical');--> statement-breakpoint
-CREATE TYPE "public"."payment_tone_enum" AS ENUM('amber', 'brand', 'green', 'rose');--> statement-breakpoint
-CREATE TYPE "public"."spend_context_enum" AS ENUM('overview', 'cards');--> statement-breakpoint
-CREATE TYPE "public"."txn_direction_enum" AS ENUM('inbound', 'outbound', 'auto');--> statement-breakpoint
-CREATE TABLE "user_accounts" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"last_four" varchar(10) NOT NULL,
-	"bank_name" varchar(255) NOT NULL,
-	"balance" varchar(50) DEFAULT '$0.00' NOT NULL,
-	"currency" varchar(10) DEFAULT 'USD' NOT NULL,
-	"status" "account_status_enum" DEFAULT 'active' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_activity_logs" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"actor_name" varchar(255) NOT NULL,
-	"action" varchar(500) NOT NULL,
-	"time_ago" varchar(50) NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_balance_overviews" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"current_balance" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"inflow_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"outflow_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"net_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"burn_rate_per_day" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"balance_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"balance_change_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"inflow_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"outflow_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"net_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"burn_rate_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"yield_apy" numeric(8, 4) DEFAULT '0' NOT NULL,
-	"total_accounts" integer DEFAULT 0 NOT NULL,
-	"last_rebalanced_at" timestamp with time zone,
-	"balance_chart_data" jsonb,
-	"allocation_data" jsonb,
-	"cash_flow_data" jsonb,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_card_program_stats" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"card_spend_mtd" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"card_spend_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"card_spend_spark_data" jsonb,
-	"rebate_earned_ytd" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"rebate_percent" numeric(5, 2) DEFAULT '1' NOT NULL,
-	"rebate_cleared_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"rebate_pending_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"top_merchant_name" varchar(255),
-	"top_merchant_amount" varchar(50),
-	"top_merchant_charges" integer,
-	"declined_this_month" integer DEFAULT 0 NOT NULL,
-	"declined_by_policy" integer DEFAULT 0 NOT NULL,
-	"declined_by_network" integer DEFAULT 0 NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_card_transactions" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"card_id" uuid,
-	"merchant" varchar(255) NOT NULL,
-	"card_label" varchar(255) NOT NULL,
-	"amount" varchar(50) NOT NULL,
-	"transaction_date" varchar(50) NOT NULL,
-	"spent_by" varchar(255),
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_cards" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"label" varchar(255) NOT NULL,
-	"card_user" varchar(255) NOT NULL,
-	"last_four" varchar(10) NOT NULL,
-	"limit_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"spent_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
-	"card_type" "card_type_enum" DEFAULT 'virtual' NOT NULL,
-	"status" "card_status_enum" DEFAULT 'active' NOT NULL,
-	"is_owner_card" boolean DEFAULT false NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_kpi_entries" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"label" varchar(255) NOT NULL,
-	"value" varchar(100) NOT NULL,
-	"delta" numeric(8, 2) DEFAULT '0' NOT NULL,
-	"hint" varchar(255),
-	"spark_data" jsonb,
-	"color" varchar(20) DEFAULT '#2A5CFF' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_notification_prefs" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"key" varchar(100) NOT NULL,
-	"label" varchar(255) NOT NULL,
-	"enabled" boolean DEFAULT true NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_spend_categories" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"context" "spend_context_enum" DEFAULT 'overview' NOT NULL,
-	"label" varchar(255) NOT NULL,
-	"amount_display" varchar(50) NOT NULL,
-	"percentage" integer DEFAULT 0 NOT NULL,
-	"color" varchar(20) DEFAULT '#DDE1E7' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_transactions" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"description" varchar(255) NOT NULL,
-	"category" varchar(255) NOT NULL,
-	"amount" varchar(50) NOT NULL,
-	"direction" "txn_direction_enum" DEFAULT 'outbound' NOT NULL,
-	"transaction_date" varchar(50) NOT NULL,
-	"account_ref" varchar(255),
-	"status" varchar(50) DEFAULT 'Sent' NOT NULL,
-	"status_tone" varchar(20) DEFAULT 'rose' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "user_upcoming_payments" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"payee" varchar(255) NOT NULL,
-	"description" varchar(500) NOT NULL,
-	"status_label" varchar(50) DEFAULT 'Scheduled' NOT NULL,
-	"due_date_display" varchar(50) NOT NULL,
-	"tone" "payment_tone_enum" DEFAULT 'green' NOT NULL,
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-ALTER TABLE "user_accounts" ADD CONSTRAINT "user_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_activity_logs" ADD CONSTRAINT "user_activity_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_balance_overviews" ADD CONSTRAINT "user_balance_overviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_card_program_stats" ADD CONSTRAINT "user_card_program_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_card_transactions" ADD CONSTRAINT "user_card_transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_card_transactions" ADD CONSTRAINT "user_card_transactions_card_id_user_cards_id_fk" FOREIGN KEY ("card_id") REFERENCES "public"."user_cards"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_cards" ADD CONSTRAINT "user_cards_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_kpi_entries" ADD CONSTRAINT "user_kpi_entries_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_notification_prefs" ADD CONSTRAINT "user_notification_prefs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_spend_categories" ADD CONSTRAINT "user_spend_categories_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_transactions" ADD CONSTRAINT "user_transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_upcoming_payments" ADD CONSTRAINT "user_upcoming_payments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "user_accounts_user_idx" ON "user_accounts" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_activity_logs_user_idx" ON "user_activity_logs" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "balance_overview_user_idx" ON "user_balance_overviews" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_card_stats_user_idx" ON "user_card_program_stats" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_card_txns_user_idx" ON "user_card_transactions" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_card_txns_card_idx" ON "user_card_transactions" USING btree ("card_id");--> statement-breakpoint
-CREATE INDEX "user_cards_user_idx" ON "user_cards" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_kpi_entries_user_idx" ON "user_kpi_entries" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_notif_prefs_user_idx" ON "user_notification_prefs" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_spend_cats_user_idx" ON "user_spend_categories" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_spend_cats_context_idx" ON "user_spend_categories" USING btree ("context");--> statement-breakpoint
-CREATE INDEX "user_transactions_user_idx" ON "user_transactions" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "user_upcoming_pmts_user_idx" ON "user_upcoming_payments" USING btree ("user_id");
+-- CREATE TYPE "public"."account_status_enum" AS ENUM('active', 'earning', 'pending');--> statement-breakpoint
+-- CREATE TYPE "public"."card_status_enum" AS ENUM('active', 'frozen', 'limit_hit');--> statement-breakpoint
+-- CREATE TYPE "public"."card_type_enum" AS ENUM('virtual', 'physical');--> statement-breakpoint
+-- CREATE TYPE "public"."payment_tone_enum" AS ENUM('amber', 'brand', 'green', 'rose');--> statement-breakpoint
+-- CREATE TYPE "public"."spend_context_enum" AS ENUM('overview', 'cards');--> statement-breakpoint
+-- CREATE TYPE "public"."txn_direction_enum" AS ENUM('inbound', 'outbound', 'auto');--> statement-breakpoint
+-- CREATE TABLE "user_accounts" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"name" varchar(255) NOT NULL,
+-- 	"last_four" varchar(10) NOT NULL,
+-- 	"bank_name" varchar(255) NOT NULL,
+-- 	"balance" varchar(50) DEFAULT '$0.00' NOT NULL,
+-- 	"currency" varchar(10) DEFAULT 'USD' NOT NULL,
+-- 	"status" "account_status_enum" DEFAULT 'active' NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_activity_logs" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"actor_name" varchar(255) NOT NULL,
+-- 	"action" varchar(500) NOT NULL,
+-- 	"time_ago" varchar(50) NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_balance_overviews" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"current_balance" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"inflow_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"outflow_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"net_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"burn_rate_per_day" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"balance_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"balance_change_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"inflow_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"outflow_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"net_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"burn_rate_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"yield_apy" numeric(8, 4) DEFAULT '0' NOT NULL,
+-- 	"total_accounts" integer DEFAULT 0 NOT NULL,
+-- 	"last_rebalanced_at" timestamp with time zone,
+-- 	"balance_chart_data" jsonb,
+-- 	"allocation_data" jsonb,
+-- 	"cash_flow_data" jsonb,
+-- 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_card_program_stats" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"card_spend_mtd" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"card_spend_delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"card_spend_spark_data" jsonb,
+-- 	"rebate_earned_ytd" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"rebate_percent" numeric(5, 2) DEFAULT '1' NOT NULL,
+-- 	"rebate_cleared_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"rebate_pending_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"top_merchant_name" varchar(255),
+-- 	"top_merchant_amount" varchar(50),
+-- 	"top_merchant_charges" integer,
+-- 	"declined_this_month" integer DEFAULT 0 NOT NULL,
+-- 	"declined_by_policy" integer DEFAULT 0 NOT NULL,
+-- 	"declined_by_network" integer DEFAULT 0 NOT NULL,
+-- 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_card_transactions" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"card_id" uuid,
+-- 	"merchant" varchar(255) NOT NULL,
+-- 	"card_label" varchar(255) NOT NULL,
+-- 	"amount" varchar(50) NOT NULL,
+-- 	"transaction_date" varchar(50) NOT NULL,
+-- 	"spent_by" varchar(255),
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_cards" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"label" varchar(255) NOT NULL,
+-- 	"card_user" varchar(255) NOT NULL,
+-- 	"last_four" varchar(10) NOT NULL,
+-- 	"limit_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"spent_amount" numeric(18, 2) DEFAULT '0' NOT NULL,
+-- 	"card_type" "card_type_enum" DEFAULT 'virtual' NOT NULL,
+-- 	"status" "card_status_enum" DEFAULT 'active' NOT NULL,
+-- 	"is_owner_card" boolean DEFAULT false NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_kpi_entries" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"label" varchar(255) NOT NULL,
+-- 	"value" varchar(100) NOT NULL,
+-- 	"delta" numeric(8, 2) DEFAULT '0' NOT NULL,
+-- 	"hint" varchar(255),
+-- 	"spark_data" jsonb,
+-- 	"color" varchar(20) DEFAULT '#2A5CFF' NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_notification_prefs" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"key" varchar(100) NOT NULL,
+-- 	"label" varchar(255) NOT NULL,
+-- 	"enabled" boolean DEFAULT true NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_spend_categories" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"context" "spend_context_enum" DEFAULT 'overview' NOT NULL,
+-- 	"label" varchar(255) NOT NULL,
+-- 	"amount_display" varchar(50) NOT NULL,
+-- 	"percentage" integer DEFAULT 0 NOT NULL,
+-- 	"color" varchar(20) DEFAULT '#DDE1E7' NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_transactions" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"description" varchar(255) NOT NULL,
+-- 	"category" varchar(255) NOT NULL,
+-- 	"amount" varchar(50) NOT NULL,
+-- 	"direction" "txn_direction_enum" DEFAULT 'outbound' NOT NULL,
+-- 	"transaction_date" varchar(50) NOT NULL,
+-- 	"account_ref" varchar(255),
+-- 	"status" varchar(50) DEFAULT 'Sent' NOT NULL,
+-- 	"status_tone" varchar(20) DEFAULT 'rose' NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "user_upcoming_payments" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"payee" varchar(255) NOT NULL,
+-- 	"description" varchar(500) NOT NULL,
+-- 	"status_label" varchar(50) DEFAULT 'Scheduled' NOT NULL,
+-- 	"due_date_display" varchar(50) NOT NULL,
+-- 	"tone" "payment_tone_enum" DEFAULT 'green' NOT NULL,
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- ALTER TABLE "user_accounts" ADD CONSTRAINT "user_accounts_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_activity_logs" ADD CONSTRAINT "user_activity_logs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_balance_overviews" ADD CONSTRAINT "user_balance_overviews_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_card_program_stats" ADD CONSTRAINT "user_card_program_stats_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_card_transactions" ADD CONSTRAINT "user_card_transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_card_transactions" ADD CONSTRAINT "user_card_transactions_card_id_user_cards_id_fk" FOREIGN KEY ("card_id") REFERENCES "public"."user_cards"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_cards" ADD CONSTRAINT "user_cards_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_kpi_entries" ADD CONSTRAINT "user_kpi_entries_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_notification_prefs" ADD CONSTRAINT "user_notification_prefs_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_spend_categories" ADD CONSTRAINT "user_spend_categories_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_transactions" ADD CONSTRAINT "user_transactions_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "user_upcoming_payments" ADD CONSTRAINT "user_upcoming_payments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+-- CREATE INDEX "user_accounts_user_idx" ON "user_accounts" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_activity_logs_user_idx" ON "user_activity_logs" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "balance_overview_user_idx" ON "user_balance_overviews" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_card_stats_user_idx" ON "user_card_program_stats" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_card_txns_user_idx" ON "user_card_transactions" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_card_txns_card_idx" ON "user_card_transactions" USING btree ("card_id");--> statement-breakpoint
+-- CREATE INDEX "user_cards_user_idx" ON "user_cards" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_kpi_entries_user_idx" ON "user_kpi_entries" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_notif_prefs_user_idx" ON "user_notification_prefs" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_spend_cats_user_idx" ON "user_spend_categories" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_spend_cats_context_idx" ON "user_spend_categories" USING btree ("context");--> statement-breakpoint
+-- CREATE INDEX "user_transactions_user_idx" ON "user_transactions" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "user_upcoming_pmts_user_idx" ON "user_upcoming_payments" USING btree ("user_id");

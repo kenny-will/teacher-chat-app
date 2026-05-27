@@ -1,115 +1,115 @@
-CREATE TYPE "public"."metric_period" AS ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly');--> statement-breakpoint
-CREATE TYPE "public"."metric_type" AS ENUM('revenue', 'users', 'sessions', 'conversions', 'churn');--> statement-breakpoint
-CREATE TYPE "public"."user_role" AS ENUM('admin', 'editor', 'viewer');--> statement-breakpoint
-CREATE TYPE "public"."user_status" AS ENUM('active', 'inactive', 'suspended');--> statement-breakpoint
-CREATE TYPE "public"."project_member_role" AS ENUM('owner', 'contributor', 'viewer');--> statement-breakpoint
-CREATE TYPE "public"."project_priority" AS ENUM('low', 'medium', 'high', 'critical');--> statement-breakpoint
-CREATE TYPE "public"."project_status" AS ENUM('active', 'archived', 'completed', 'on_hold');--> statement-breakpoint
-CREATE TYPE "public"."document_status" AS ENUM('draft', 'review', 'published');--> statement-breakpoint
-CREATE TYPE "public"."document_type" AS ENUM('report', 'presentation', 'spreadsheet', 'contract', 'other');--> statement-breakpoint
-CREATE TYPE "public"."notification_severity" AS ENUM('low', 'medium', 'high', 'critical');--> statement-breakpoint
-CREATE TYPE "public"."notification_type" AS ENUM('info', 'warning', 'error', 'success');--> statement-breakpoint
-CREATE TABLE "chart_data_points" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"series" varchar(100) NOT NULL,
-	"label" varchar(100) NOT NULL,
-	"value" numeric(15, 4) NOT NULL,
-	"secondary_value" numeric(15, 4),
-	"sort_order" integer DEFAULT 0 NOT NULL,
-	"period_start" timestamp with time zone NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "metrics" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"type" "metric_type" NOT NULL,
-	"period" "metric_period" NOT NULL,
-	"value" numeric(15, 4) NOT NULL,
-	"previous_value" numeric(15, 4),
-	"period_start" timestamp with time zone NOT NULL,
-	"period_end" timestamp with time zone NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "users" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"email" varchar(255) NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"avatar_url" varchar(500),
-	"role" "user_role" DEFAULT 'viewer' NOT NULL,
-	"status" "user_status" DEFAULT 'active' NOT NULL,
-	"last_login_at" timestamp with time zone,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "users_email_unique" UNIQUE("email")
-);
---> statement-breakpoint
-CREATE TABLE "project_members" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"project_id" uuid NOT NULL,
-	"user_id" uuid NOT NULL,
-	"role" "project_member_role" DEFAULT 'contributor' NOT NULL,
-	"joined_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "projects" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"name" varchar(255) NOT NULL,
-	"description" text,
-	"status" "project_status" DEFAULT 'active' NOT NULL,
-	"priority" "project_priority" DEFAULT 'medium' NOT NULL,
-	"due_date" timestamp with time zone,
-	"created_by_id" uuid NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "documents" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"title" varchar(500) NOT NULL,
-	"description" text,
-	"type" "document_type" DEFAULT 'other' NOT NULL,
-	"status" "document_status" DEFAULT 'draft' NOT NULL,
-	"file_url" varchar(1000),
-	"owner_id" uuid NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
-);
---> statement-breakpoint
-CREATE TABLE "notifications" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"type" "notification_type" DEFAULT 'info' NOT NULL,
-	"severity" "notification_severity" DEFAULT 'low' NOT NULL,
-	"title" varchar(255) NOT NULL,
-	"message" text NOT NULL,
-	"is_read" boolean DEFAULT false NOT NULL,
-	"action_url" varchar(1000),
-	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"read_at" timestamp with time zone
-);
---> statement-breakpoint
-ALTER TABLE "project_members" ADD CONSTRAINT "project_members_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "project_members" ADD CONSTRAINT "project_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "projects" ADD CONSTRAINT "projects_created_by_id_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "documents" ADD CONSTRAINT "documents_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-CREATE INDEX "chart_series_idx" ON "chart_data_points" USING btree ("series");--> statement-breakpoint
-CREATE INDEX "chart_period_idx" ON "chart_data_points" USING btree ("period_start");--> statement-breakpoint
-CREATE INDEX "metrics_type_idx" ON "metrics" USING btree ("type");--> statement-breakpoint
-CREATE INDEX "metrics_period_start_idx" ON "metrics" USING btree ("period_start");--> statement-breakpoint
-CREATE INDEX "metrics_type_period_idx" ON "metrics" USING btree ("type","period");--> statement-breakpoint
-CREATE INDEX "users_email_idx" ON "users" USING btree ("email");--> statement-breakpoint
-CREATE INDEX "users_role_idx" ON "users" USING btree ("role");--> statement-breakpoint
-CREATE INDEX "users_status_idx" ON "users" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "project_members_project_idx" ON "project_members" USING btree ("project_id");--> statement-breakpoint
-CREATE INDEX "project_members_user_idx" ON "project_members" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "projects_status_idx" ON "projects" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "projects_created_by_idx" ON "projects" USING btree ("created_by_id");--> statement-breakpoint
-CREATE INDEX "documents_owner_idx" ON "documents" USING btree ("owner_id");--> statement-breakpoint
-CREATE INDEX "documents_status_idx" ON "documents" USING btree ("status");--> statement-breakpoint
-CREATE INDEX "documents_type_idx" ON "documents" USING btree ("type");--> statement-breakpoint
-CREATE INDEX "notifications_user_idx" ON "notifications" USING btree ("user_id");--> statement-breakpoint
-CREATE INDEX "notifications_is_read_idx" ON "notifications" USING btree ("is_read");--> statement-breakpoint
-CREATE INDEX "notifications_created_idx" ON "notifications" USING btree ("created_at");
+-- CREATE TYPE "public"."metric_period" AS ENUM('daily', 'weekly', 'monthly', 'quarterly', 'yearly');--> statement-breakpoint
+-- CREATE TYPE "public"."metric_type" AS ENUM('revenue', 'users', 'sessions', 'conversions', 'churn');--> statement-breakpoint
+-- CREATE TYPE "public"."user_role" AS ENUM('admin', 'editor', 'viewer');--> statement-breakpoint
+-- CREATE TYPE "public"."user_status" AS ENUM('active', 'inactive', 'suspended');--> statement-breakpoint
+-- CREATE TYPE "public"."project_member_role" AS ENUM('owner', 'contributor', 'viewer');--> statement-breakpoint
+-- CREATE TYPE "public"."project_priority" AS ENUM('low', 'medium', 'high', 'critical');--> statement-breakpoint
+-- CREATE TYPE "public"."project_status" AS ENUM('active', 'archived', 'completed', 'on_hold');--> statement-breakpoint
+-- CREATE TYPE "public"."document_status" AS ENUM('draft', 'review', 'published');--> statement-breakpoint
+-- CREATE TYPE "public"."document_type" AS ENUM('report', 'presentation', 'spreadsheet', 'contract', 'other');--> statement-breakpoint
+-- CREATE TYPE "public"."notification_severity" AS ENUM('low', 'medium', 'high', 'critical');--> statement-breakpoint
+-- CREATE TYPE "public"."notification_type" AS ENUM('info', 'warning', 'error', 'success');--> statement-breakpoint
+-- CREATE TABLE "chart_data_points" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"series" varchar(100) NOT NULL,
+-- 	"label" varchar(100) NOT NULL,
+-- 	"value" numeric(15, 4) NOT NULL,
+-- 	"secondary_value" numeric(15, 4),
+-- 	"sort_order" integer DEFAULT 0 NOT NULL,
+-- 	"period_start" timestamp with time zone NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "metrics" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"type" "metric_type" NOT NULL,
+-- 	"period" "metric_period" NOT NULL,
+-- 	"value" numeric(15, 4) NOT NULL,
+-- 	"previous_value" numeric(15, 4),
+-- 	"period_start" timestamp with time zone NOT NULL,
+-- 	"period_end" timestamp with time zone NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+-- 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "users" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"email" varchar(255) NOT NULL,
+-- 	"name" varchar(255) NOT NULL,
+-- 	"avatar_url" varchar(500),
+-- 	"role" "user_role" DEFAULT 'viewer' NOT NULL,
+-- 	"status" "user_status" DEFAULT 'active' NOT NULL,
+-- 	"last_login_at" timestamp with time zone,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+-- 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+-- 	CONSTRAINT "users_email_unique" UNIQUE("email")
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "project_members" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"project_id" uuid NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"role" "project_member_role" DEFAULT 'contributor' NOT NULL,
+-- 	"joined_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "projects" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"name" varchar(255) NOT NULL,
+-- 	"description" text,
+-- 	"status" "project_status" DEFAULT 'active' NOT NULL,
+-- 	"priority" "project_priority" DEFAULT 'medium' NOT NULL,
+-- 	"due_date" timestamp with time zone,
+-- 	"created_by_id" uuid NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+-- 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "documents" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"title" varchar(500) NOT NULL,
+-- 	"description" text,
+-- 	"type" "document_type" DEFAULT 'other' NOT NULL,
+-- 	"status" "document_status" DEFAULT 'draft' NOT NULL,
+-- 	"file_url" varchar(1000),
+-- 	"owner_id" uuid NOT NULL,
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+-- 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+-- );
+-- --> statement-breakpoint
+-- CREATE TABLE "notifications" (
+-- 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+-- 	"user_id" uuid NOT NULL,
+-- 	"type" "notification_type" DEFAULT 'info' NOT NULL,
+-- 	"severity" "notification_severity" DEFAULT 'low' NOT NULL,
+-- 	"title" varchar(255) NOT NULL,
+-- 	"message" text NOT NULL,
+-- 	"is_read" boolean DEFAULT false NOT NULL,
+-- 	"action_url" varchar(1000),
+-- 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+-- 	"read_at" timestamp with time zone
+-- );
+-- --> statement-breakpoint
+-- ALTER TABLE "project_members" ADD CONSTRAINT "project_members_project_id_projects_id_fk" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "project_members" ADD CONSTRAINT "project_members_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "projects" ADD CONSTRAINT "projects_created_by_id_users_id_fk" FOREIGN KEY ("created_by_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "documents" ADD CONSTRAINT "documents_owner_id_users_id_fk" FOREIGN KEY ("owner_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+-- ALTER TABLE "notifications" ADD CONSTRAINT "notifications_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+-- CREATE INDEX "chart_series_idx" ON "chart_data_points" USING btree ("series");--> statement-breakpoint
+-- CREATE INDEX "chart_period_idx" ON "chart_data_points" USING btree ("period_start");--> statement-breakpoint
+-- CREATE INDEX "metrics_type_idx" ON "metrics" USING btree ("type");--> statement-breakpoint
+-- CREATE INDEX "metrics_period_start_idx" ON "metrics" USING btree ("period_start");--> statement-breakpoint
+-- CREATE INDEX "metrics_type_period_idx" ON "metrics" USING btree ("type","period");--> statement-breakpoint
+-- CREATE INDEX "users_email_idx" ON "users" USING btree ("email");--> statement-breakpoint
+-- CREATE INDEX "users_role_idx" ON "users" USING btree ("role");--> statement-breakpoint
+-- CREATE INDEX "users_status_idx" ON "users" USING btree ("status");--> statement-breakpoint
+-- CREATE INDEX "project_members_project_idx" ON "project_members" USING btree ("project_id");--> statement-breakpoint
+-- CREATE INDEX "project_members_user_idx" ON "project_members" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "projects_status_idx" ON "projects" USING btree ("status");--> statement-breakpoint
+-- CREATE INDEX "projects_created_by_idx" ON "projects" USING btree ("created_by_id");--> statement-breakpoint
+-- CREATE INDEX "documents_owner_idx" ON "documents" USING btree ("owner_id");--> statement-breakpoint
+-- CREATE INDEX "documents_status_idx" ON "documents" USING btree ("status");--> statement-breakpoint
+-- CREATE INDEX "documents_type_idx" ON "documents" USING btree ("type");--> statement-breakpoint
+-- CREATE INDEX "notifications_user_idx" ON "notifications" USING btree ("user_id");--> statement-breakpoint
+-- CREATE INDEX "notifications_is_read_idx" ON "notifications" USING btree ("is_read");--> statement-breakpoint
+-- CREATE INDEX "notifications_created_idx" ON "notifications" USING btree ("created_at");

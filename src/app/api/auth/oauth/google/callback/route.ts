@@ -14,7 +14,7 @@ import {
   COOKIE_NAME,
   SESSION_DURATION_DAYS_EXPORT,
 } from "@/shared/infrastructure/auth/token";
-import { buildDefaultCards } from "@/modules/auth/application/use-cases/register.use-case";
+import { buildDefaultCards, generateAccountNumber } from "@/modules/auth/application/use-cases/register.use-case";
 import { insertCard } from "@/modules/financial/infrastructure/persistence/financial.repository";
 import { logger } from "@/shared/infrastructure/logger/logger";
 
@@ -113,6 +113,7 @@ export async function GET(req: NextRequest) {
       role: roleResult.data,
       status: statusResult.data,
       lastLoginAt: null,
+      accountNumber: generateAccountNumber(),
     });
 
     const saveResult = await userRepo.save(newUser);
