@@ -8,6 +8,7 @@ import {
   RefreshCwIcon,
   SearchIcon,
   CheckCheckIcon,
+  ArrowLeftIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -262,7 +263,13 @@ export function AdminChatPage() {
         >
           <div className="flex h-full">
             {/* ── Left: thread list ── */}
-            <div className="w-[280px] shrink-0 border-r border-gray-200 dark:border-white/10 flex flex-col h-full">
+            <div
+              className={cn(
+                "shrink-0 border-r border-gray-200 dark:border-white/10 flex flex-col h-full",
+                "w-full md:w-70",
+                activeThread ? "hidden md:flex" : "flex",
+              )}
+            >
               {/* Search */}
               <div className="px-3 py-3 border-b border-gray-100 dark:border-white/8">
                 <div className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-2.5 h-8">
@@ -299,7 +306,12 @@ export function AdminChatPage() {
             </div>
 
             {/* ── Right: message pane ── */}
-            <div className="flex-1 flex flex-col h-full min-w-0">
+            <div
+              className={cn(
+                "flex-1 flex flex-col h-full min-w-0",
+                activeThread ? "flex" : "hidden md:flex",
+              )}
+            >
               {!activeThread ? (
                 <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8">
                   <div className="h-16 w-16 rounded-3xl bg-indigo-50 dark:bg-indigo-950/30 grid place-items-center">
@@ -319,6 +331,12 @@ export function AdminChatPage() {
                 <>
                   {/* Conversation header */}
                   <div className="flex items-center gap-3 px-5 py-3.5 border-b border-gray-100 dark:border-white/8 shrink-0">
+                    <button
+                      onClick={() => setActive(null)}
+                      className="md:hidden h-8 w-8 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition grid place-items-center shrink-0 -ml-1"
+                    >
+                      <ArrowLeftIcon className="h-4 w-4 text-gray-500" />
+                    </button>
                     <AvatarBadge name={activeThread.userName} size={36} />
                     <div className="flex-1 min-w-0">
                       <div className="text-[13.5px] font-semibold truncate">
