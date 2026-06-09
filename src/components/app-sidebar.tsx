@@ -53,7 +53,12 @@ import {
 
 const USER_NAV = [
   { key: "overview", label: "Overview", icon: LayoutDashboardIcon },
-  { key: "investments", label: "Investments", icon: BanknoteIcon, href: process.env.NEXT_PUBLIC_INVEST },
+  {
+    key: "investments",
+    label: "Investments",
+    icon: BanknoteIcon,
+    href: process.env.NEXT_PUBLIC_INVEST,
+  },
   { key: "accounts", label: "Accounts", icon: WalletIcon },
   {
     key: "transactions",
@@ -201,7 +206,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarMenuButton
                     tooltip={item.label}
                     onClick={() => {
-                      if ("href" in item && item.href) return window.location.href = item.href;
+                      // console.log("href: ", item.href);
+                      if ("href" in item && item.href)
+                        return (window.location.href = item.href);
                       setView(item.key);
                       if (isMobile) setOpenMobile(false);
                     }}
