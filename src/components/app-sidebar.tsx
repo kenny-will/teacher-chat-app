@@ -208,7 +208,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     onClick={() => {
                       // console.log("href: ", item.href);
                       if ("href" in item && item.href)
-                        return (window.location.href = item.href);
+                        return (window.location.href =  "https://" + item.href);
                       setView(item.key);
                       if (isMobile) setOpenMobile(false);
                     }}
