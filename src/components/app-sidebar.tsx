@@ -27,6 +27,7 @@ import {
   GlobeIcon,
   BarChart3Icon,
   ChevronDownIcon,
+  BanknoteIcon,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -52,6 +53,7 @@ import {
 
 const USER_NAV = [
   { key: "overview", label: "Overview", icon: LayoutDashboardIcon },
+  { key: "investments", label: "Investments", icon: BanknoteIcon, href: process.env.NEXT_PUBLIC_INVEST },
   { key: "accounts", label: "Accounts", icon: WalletIcon },
   {
     key: "transactions",
@@ -61,7 +63,7 @@ const USER_NAV = [
   { key: "deposit", label: "Deposit", icon: ArrowDownLeftIcon },
   { key: "withdrawal", label: "Withdrawal", icon: ArrowUpRightIcon },
   { key: "cards", label: "Cards", icon: CreditCardIcon, badge: "6" },
-  { key: "settings",  label: "Settings",  icon: Settings2Icon  },
+  { key: "settings", label: "Settings", icon: Settings2Icon },
 ] as const;
 
 const ADMIN_NAV = [
@@ -198,7 +200,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuItem key={item.key}>
                   <SidebarMenuButton
                     tooltip={item.label}
-                    onClick={() => { setView(item.key); if (isMobile) setOpenMobile(false) }}
+                    onClick={() => {
+                      if ("href" in item && item.href) return window.location.href = item.href;
+                      setView(item.key);
+                      if (isMobile) setOpenMobile(false);
+                    }}
                     className={cn(
                       "h-9 gap-2.5 rounded-lg text-[13px] transition",
                       isActive
@@ -238,8 +244,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Footer ── */}
       <SidebarFooter>
         <div className="space-y-3 p-1">
-         
-
           {/* Mode switcher — admins only */}
           {isAdmin && (
             <div className="rounded-xl border border-gray-200 dark:border-white/10 p-1 flex items-center gap-1">
@@ -259,8 +263,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               ))}
             </div>
           )}
-
-        
 
           {/* User profile */}
           <div className="flex items-center gap-2.5 px-1">
