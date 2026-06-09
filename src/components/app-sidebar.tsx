@@ -197,6 +197,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               Manage User
             </SidebarGroupLabel>
           )}
+          {/* Navigation items */}
           <SidebarMenu>
             {navItems.map((item) => {
               const Icon = item.icon;
