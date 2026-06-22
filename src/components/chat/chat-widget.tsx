@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { MessageCircleIcon, XIcon, SendIcon, MinusIcon, BotIcon } from "lucide-react"
+import { MessageCircleIcon, XIcon, SendIcon, MinusIcon, BotIcon, ImagePlusIcon, Loader2Icon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SITE_TITLE } from "@/lib/site"
 import { useAuth } from "@/contexts/auth-context"
@@ -34,12 +34,23 @@ function Bubble({ msg }: { msg: ChatMessage }) {
         </div>
       )}
       <div className={cn(
-        "max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed",
+        "max-w-[85%] rounded-2xl text-[13px] leading-relaxed overflow-hidden",
+        msg.attachmentId ? "" : "px-3.5 py-2.5",
         isUser
           ? "bg-indigo-600 text-white rounded-br-sm"
           : "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100 rounded-bl-sm"
       )}>
-        {msg.content}
+        {msg.attachmentId && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/chat/attachments/${msg.attachmentId}`}
+            alt="Attachment"
+            className="block max-w-full max-h-60 object-contain"
+          />
+        )}
+        {msg.content && (
+          <div className={msg.attachmentId ? "px-3.5 py-2.5" : ""}>{msg.content}</div>
+        )}
       </div>
       <span className={cn(
         "text-[10.5px] text-gray-400 px-1",
@@ -77,10 +88,12 @@ export function ChatWidget() {
   const [minimized, setMin]     = useState(false)
   const [input, setInput]       = useState("")
   const [sending, setSending]   = useState(false)
+  const [uploading, setUploading] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [unread, setUnread]     = useState(0)
   const bottomRef               = useRef<HTMLDivElement>(null)
   const inputRef                = useRef<HTMLInputElement>(null)
+  const fileInputRef             = useRef<HTMLInputElement>(null)
 
   // Subscribe to messages
   useEffect(() => {
@@ -144,6 +157,39 @@ export function ChatWidget() {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
       handleSend()
+    }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file || uploading || !firebaseReady) return
+
+    const caption = input.trim()
+    setInput("")
+    setUploading(true)
+    try {
+      const form = new FormData()
+      form.append("file", file)
+      form.append("chatUserId", user.id)
+      const res = await fetch("/api/chat/attachments", { method: "POST", body: form })
+      if (!res.ok) throw new Error("Upload failed")
+      const attachment = await res.json() as { id: string; mimeType: string }
+
+      await sendMessage({
+        userId: user.id,
+        userName: user.name,
+        userEmail: user.email,
+        content: caption,
+        sender: "user",
+        senderName: user.name,
+        attachmentId: attachment.id,
+        attachmentMimeType: attachment.mimeType,
+      })
+    } catch (err) {
+      console.error("Chat attachment upload error:", err)
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -211,6 +257,25 @@ export function ChatWidget() {
 
               {/* Input */}
               <div className="border-t border-gray-100 dark:border-white/10 px-3 py-3 flex items-center gap-2 shrink-0">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={!firebaseReady || uploading}
+                  title="Attach image"
+                  className="h-9 w-9 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition grid place-items-center shrink-0"
+                >
+                  {uploading ? (
+                    <Loader2Icon className="h-4.5 w-4.5 animate-spin" />
+                  ) : (
+                    <ImagePlusIcon className="h-4.5 w-4.5" />
+                  )}
+                </button>
                 <input
                   ref={inputRef}
                   value={input}

@@ -15,6 +15,7 @@ export default defineConfig({
     './src/modules/notifications/infrastructure/persistence/schema.ts',
     './src/modules/auth/infrastructure/persistence/schema.ts',
     './src/modules/financial/infrastructure/persistence/schema.ts',
+    './src/modules/chat/infrastructure/persistence/schema.ts',
   ],
   out: './src/shared/infrastructure/database/migrations',
   dialect: 'postgresql',

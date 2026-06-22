@@ -9,6 +9,8 @@ import {
   SearchIcon,
   CheckCheckIcon,
   ArrowLeftIcon,
+  ImagePlusIcon,
+  Loader2Icon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -139,13 +141,24 @@ function AdminBubble({ msg }: { msg: ChatMessage }) {
       )}
       <div
         className={cn(
-          "max-w-[75%] px-3.5 py-2.5 rounded-2xl text-[13px] leading-relaxed",
+          "max-w-[75%] rounded-2xl text-[13px] leading-relaxed overflow-hidden",
+          msg.attachmentId ? "" : "px-3.5 py-2.5",
           isAdmin
             ? "bg-indigo-600 text-white rounded-br-sm"
             : "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100 rounded-bl-sm",
         )}
       >
-        {msg.content}
+        {msg.attachmentId && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={`/api/chat/attachments/${msg.attachmentId}`}
+            alt="Attachment"
+            className="block max-w-full max-h-60 object-contain"
+          />
+        )}
+        {msg.content && (
+          <div className={msg.attachmentId ? "px-3.5 py-2.5" : ""}>{msg.content}</div>
+        )}
       </div>
       <div
         className={cn(
@@ -175,8 +188,10 @@ export function AdminChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const bottomRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const totalUnread = threads.reduce((s, t) => s + t.unreadByAdmin, 0);
 
@@ -225,6 +240,39 @@ export function AdminChatPage() {
       console.error("Admin send error:", e);
     } finally {
       setSending(false);
+    }
+  }
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file || uploading || !firebaseReady || !activeThread) return;
+
+    const caption = input.trim();
+    setInput("");
+    setUploading(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("chatUserId", activeThread.userId);
+      const res = await fetch("/api/chat/attachments", { method: "POST", body: form });
+      if (!res.ok) throw new Error("Upload failed");
+      const attachment = (await res.json()) as { id: string; mimeType: string };
+
+      await sendMessage({
+        userId: activeThread.userId,
+        userName: activeThread.userName,
+        userEmail: activeThread.userEmail,
+        content: caption,
+        sender: "admin",
+        senderName: adminUser.name,
+        attachmentId: attachment.id,
+        attachmentMimeType: attachment.mimeType,
+      });
+    } catch (err) {
+      console.error("Admin attachment upload error:", err);
+    } finally {
+      setUploading(false);
     }
   }
 
@@ -369,6 +417,25 @@ export function AdminChatPage() {
 
                   {/* Reply input */}
                   <div className="border-t border-gray-100 dark:border-white/10 px-4 py-3 flex items-center gap-2 shrink-0">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/gif"
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploading}
+                      title="Attach image"
+                      className="h-10 w-10 rounded-xl text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10 disabled:opacity-40 disabled:cursor-not-allowed transition grid place-items-center shrink-0"
+                    >
+                      {uploading ? (
+                        <Loader2Icon className="h-4.5 w-4.5 animate-spin" />
+                      ) : (
+                        <ImagePlusIcon className="h-4.5 w-4.5" />
+                      )}
+                    </button>
                     <input
                       value={input}
                       onChange={(e) => setInput(e.target.value)}

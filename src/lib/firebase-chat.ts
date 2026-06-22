@@ -21,6 +21,8 @@ export interface ChatMessage {
   sender: "user" | "admin"
   senderName: string
   createdAt: Date | null
+  attachmentId?: string
+  attachmentMimeType?: string
 }
 
 export interface ChatThread {
@@ -61,6 +63,8 @@ export function subscribeToMessages(
         sender: data.sender ?? "user",
         senderName: data.senderName ?? "",
         createdAt: toDate(data.createdAt),
+        attachmentId: data.attachmentId,
+        attachmentMimeType: data.attachmentMimeType,
       }
     })
     callback(msgs)
@@ -76,10 +80,12 @@ export async function sendMessage(params: {
   content: string
   sender: "user" | "admin"
   senderName: string
+  attachmentId?: string
+  attachmentMimeType?: string
 }): Promise<void> {
   if (!db) throw new Error("Firebase not configured")
 
-  const { userId, userName, userEmail, content, sender, senderName } = params
+  const { userId, userName, userEmail, content, sender, senderName, attachmentId, attachmentMimeType } = params
 
   // Write message to subcollection
   await addDoc(collection(db, "chats", userId, "messages"), {
@@ -87,6 +93,7 @@ export async function sendMessage(params: {
     sender,
     senderName,
     createdAt: serverTimestamp(),
+    ...(attachmentId ? { attachmentId, attachmentMimeType } : {}),
   })
 
   // Upsert thread metadata
@@ -96,7 +103,7 @@ export async function sendMessage(params: {
       userId,
       userName,
       userEmail,
-      lastMessage: content,
+      lastMessage: content || (attachmentId ? "📷 Photo" : ""),
       lastSender: sender,
       lastMessageAt: serverTimestamp(),
       unreadByAdmin: sender === "user" ? increment(1) : 0,
