@@ -157,7 +157,7 @@ interface PageHeaderProps {
 export function PageHeader({ eyebrow, title, subtitle, actions }: PageHeaderProps) {
   return (
     <div className="mb-6">
-      <div className="flex items-end justify-between gap-6">
+      <div className="flex flex-col sm:flex-row items-end justify-between gap-6">
         <div>
           {eyebrow && (
             <div className="text-[11px] uppercase tracking-[0.14em] text-gray-500">
