@@ -3,6 +3,8 @@ import {
   doc,
   addDoc,
   setDoc,
+  deleteDoc,
+  updateDoc,
   onSnapshot,
   serverTimestamp,
   query,
@@ -23,6 +25,7 @@ export interface ChatMessage {
   createdAt: Date | null
   attachmentId?: string
   attachmentMimeType?: string
+  editedAt?: Date | null
 }
 
 export interface ChatThread {
@@ -65,6 +68,7 @@ export function subscribeToMessages(
         createdAt: toDate(data.createdAt),
         attachmentId: data.attachmentId,
         attachmentMimeType: data.attachmentMimeType,
+        editedAt: toDate(data.editedAt),
       }
     })
     callback(msgs)
@@ -110,6 +114,23 @@ export async function sendMessage(params: {
     },
     { merge: true },
   )
+}
+
+// ─── Edit a message (admin only) ──────────────────────────────────────────────
+
+export async function editMessage(userId: string, messageId: string, content: string): Promise<void> {
+  if (!db) throw new Error("Firebase not configured")
+  await updateDoc(doc(db, "chats", userId, "messages", messageId), {
+    content,
+    editedAt: serverTimestamp(),
+  })
+}
+
+// ─── Delete a message (admin only) ────────────────────────────────────────────
+
+export async function deleteMessage(userId: string, messageId: string): Promise<void> {
+  if (!db) throw new Error("Firebase not configured")
+  await deleteDoc(doc(db, "chats", userId, "messages", messageId))
 }
 
 // ─── Subscribe to all chat threads (admin inbox) ──────────────────────────────

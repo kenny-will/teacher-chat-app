@@ -72,4 +72,17 @@ export class DrizzleChatAttachmentRepository {
       return err(new Error('Failed to load chat attachment', { cause: error }))
     }
   }
+
+  /**
+   * Deletes a stored attachment, e.g. when its message is removed.
+   */
+  async delete(id: string): Promise<Result<void>> {
+    try {
+      await db.delete(chatAttachmentsTable).where(eq(chatAttachmentsTable.id, id))
+      return ok(undefined)
+    } catch (error) {
+      log.error({ error, id }, 'delete failed')
+      return err(new Error('Failed to delete chat attachment', { cause: error }))
+    }
+  }
 }

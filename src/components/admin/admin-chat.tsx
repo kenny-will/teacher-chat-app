@@ -11,6 +11,10 @@ import {
   ArrowLeftIcon,
   ImagePlusIcon,
   Loader2Icon,
+  PencilIcon,
+  Trash2Icon,
+  XIcon,
+  CheckIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
@@ -19,6 +23,8 @@ import {
   subscribeToAllThreads,
   subscribeToMessages,
   sendMessage,
+  editMessage,
+  deleteMessage,
   markThreadRead,
   type ChatThread,
   type ChatMessage,
@@ -122,12 +128,32 @@ function ThreadItem({
 
 // ─── Message bubble (admin view) ──────────────────────────────────────────────
 
-function AdminBubble({ msg }: { msg: ChatMessage }) {
+function AdminBubble({
+  msg,
+  isEditing,
+  editValue,
+  onEditValueChange,
+  onStartEdit,
+  onSaveEdit,
+  onCancelEdit,
+  onDelete,
+  isDeleting,
+}: {
+  msg: ChatMessage;
+  isEditing: boolean;
+  editValue: string;
+  onEditValueChange: (value: string) => void;
+  onStartEdit: () => void;
+  onSaveEdit: () => void;
+  onCancelEdit: () => void;
+  onDelete: () => void;
+  isDeleting: boolean;
+}) {
   const isAdmin = msg.sender === "admin";
   return (
     <div
       className={cn(
-        "flex flex-col gap-0.5",
+        "group flex flex-col gap-0.5",
         isAdmin ? "items-end" : "items-start",
       )}
     >
@@ -139,25 +165,76 @@ function AdminBubble({ msg }: { msg: ChatMessage }) {
           </span>
         </div>
       )}
-      <div
-        className={cn(
-          "max-w-[75%] rounded-2xl text-[13px] leading-relaxed overflow-hidden",
-          msg.attachmentId ? "" : "px-3.5 py-2.5",
-          isAdmin
-            ? "bg-indigo-600 text-white rounded-br-sm"
-            : "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100 rounded-bl-sm",
-        )}
-      >
-        {msg.attachmentId && (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={`/api/chat/attachments/${msg.attachmentId}`}
-            alt="Attachment"
-            className="block max-w-full max-h-60 object-contain"
-          />
-        )}
-        {msg.content && (
-          <div className={msg.attachmentId ? "px-3.5 py-2.5" : ""}>{msg.content}</div>
+      <div className={cn("flex items-center gap-1.5", isAdmin ? "flex-row-reverse" : "")}>
+        <div
+          className={cn(
+            "max-w-[75%] rounded-2xl text-[13px] leading-relaxed overflow-hidden",
+            msg.attachmentId ? "" : "px-3.5 py-2.5",
+            isAdmin
+              ? "bg-indigo-600 text-white rounded-br-sm"
+              : "bg-gray-100 dark:bg-white/10 text-gray-900 dark:text-gray-100 rounded-bl-sm",
+          )}
+        >
+          {msg.attachmentId && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={`/api/chat/attachments/${msg.attachmentId}`}
+              alt="Attachment"
+              className="block max-w-full max-h-60 object-contain"
+            />
+          )}
+          {isEditing ? (
+            <div className={cn("flex items-center gap-1.5", msg.attachmentId ? "px-2 py-2" : "")}>
+              <input
+                autoFocus
+                value={editValue}
+                onChange={(e) => onEditValueChange(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onSaveEdit();
+                  if (e.key === "Escape") onCancelEdit();
+                }}
+                placeholder="Caption…"
+                className={cn(
+                  "flex-1 min-w-0 bg-transparent text-[13px] outline-none placeholder:opacity-60",
+                  isAdmin ? "text-white" : "text-gray-900 dark:text-gray-100",
+                )}
+              />
+              <button onClick={onSaveEdit} title="Save" className="shrink-0 opacity-80 hover:opacity-100">
+                <CheckIcon className="h-3.5 w-3.5" />
+              </button>
+              <button onClick={onCancelEdit} title="Cancel" className="shrink-0 opacity-80 hover:opacity-100">
+                <XIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          ) : (
+            msg.content && (
+              <div className={msg.attachmentId ? "px-3.5 py-2.5" : ""}>{msg.content}</div>
+            )
+          )}
+        </div>
+
+        {!isEditing && (
+          <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition shrink-0">
+            <button
+              onClick={onStartEdit}
+              title="Edit"
+              className="h-6 w-6 rounded-md text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-white/10 grid place-items-center"
+            >
+              <PencilIcon className="h-3 w-3" />
+            </button>
+            <button
+              onClick={onDelete}
+              disabled={isDeleting}
+              title="Delete"
+              className="h-6 w-6 rounded-md text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-white/10 disabled:opacity-40 grid place-items-center"
+            >
+              {isDeleting ? (
+                <Loader2Icon className="h-3 w-3 animate-spin" />
+              ) : (
+                <Trash2Icon className="h-3 w-3" />
+              )}
+            </button>
+          </div>
         )}
       </div>
       <div
@@ -171,6 +248,7 @@ function AdminBubble({ msg }: { msg: ChatMessage }) {
             hour: "2-digit",
             minute: "2-digit",
           }) ?? ""}
+          {msg.editedAt ? " · edited" : ""}
         </span>
         {isAdmin && <CheckCheckIcon className="h-3 w-3 text-indigo-400" />}
       </div>
@@ -190,6 +268,9 @@ export function AdminChatPage() {
   const [sending, setSending] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -205,6 +286,7 @@ export function AdminChatPage() {
   useEffect(() => {
     if (!firebaseReady || !activeThread) return;
     setMessages([]);
+    setEditingId(null);
     const unsub = subscribeToMessages(activeThread.userId, setMessages);
     markThreadRead(activeThread.userId).catch(() => {});
     return unsub;
@@ -273,6 +355,44 @@ export function AdminChatPage() {
       console.error("Admin attachment upload error:", err);
     } finally {
       setUploading(false);
+    }
+  }
+
+  function handleStartEdit(msg: ChatMessage) {
+    setEditingId(msg.id);
+    setEditValue(msg.content);
+  }
+
+  function handleCancelEdit() {
+    setEditingId(null);
+    setEditValue("");
+  }
+
+  async function handleSaveEdit() {
+    if (!activeThread || !editingId) return;
+    const id = editingId;
+    const text = editValue.trim();
+    setEditingId(null);
+    try {
+      await editMessage(activeThread.userId, id, text);
+    } catch (e) {
+      console.error("Edit message error:", e);
+    }
+  }
+
+  async function handleDeleteMessage(msg: ChatMessage) {
+    if (!activeThread || deletingId) return;
+    if (!window.confirm("Delete this message? This cannot be undone.")) return;
+    setDeletingId(msg.id);
+    try {
+      if (msg.attachmentId) {
+        await fetch(`/api/chat/attachments/${msg.attachmentId}`, { method: "DELETE" }).catch(() => {});
+      }
+      await deleteMessage(activeThread.userId, msg.id);
+    } catch (e) {
+      console.error("Delete message error:", e);
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -410,7 +530,20 @@ export function AdminChatPage() {
                         </div>
                       </div>
                     ) : (
-                      messages.map((m) => <AdminBubble key={m.id} msg={m} />)
+                      messages.map((m) => (
+                        <AdminBubble
+                          key={m.id}
+                          msg={m}
+                          isEditing={editingId === m.id}
+                          editValue={editValue}
+                          onEditValueChange={setEditValue}
+                          onStartEdit={() => handleStartEdit(m)}
+                          onSaveEdit={handleSaveEdit}
+                          onCancelEdit={handleCancelEdit}
+                          onDelete={() => handleDeleteMessage(m)}
+                          isDeleting={deletingId === m.id}
+                        />
+                      ))
                     )}
                     <div ref={bottomRef} />
                   </div>

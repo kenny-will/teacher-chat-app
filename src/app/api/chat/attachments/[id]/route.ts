@@ -32,3 +32,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     },
   })
 }
+
+export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const serverSession = await getServerSession()
+  if (!serverSession) {
+    return NextResponse.json({ error: 'Unauthenticated' }, { status: 401 })
+  }
+  if (serverSession.user.role.value !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden — admin only' }, { status: 403 })
+  }
+
+  const { id } = await params
+  const result = await attachmentRepo.delete(id)
+  if (!result.success) {
+    return NextResponse.json({ error: 'Failed to delete attachment' }, { status: 500 })
+  }
+
+  return NextResponse.json({ ok: true })
+}
