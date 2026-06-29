@@ -25,6 +25,21 @@ const RECENTS = [
 ] as const
 
 const RAILS = ["ACH", "Wire", "RTP"] as const
+const DOMESTIC_RAILS = new Set<typeof RAILS[number]>(["ACH", "RTP"])
+
+const CURRENCIES = [
+  { code: "USD", symbol: "$", name: "US Dollar",         rate: 1 },
+  { code: "EUR", symbol: "€", name: "Euro",               rate: 1.08 },
+  { code: "GBP", symbol: "£", name: "British Pound",      rate: 1.27 },
+  { code: "CAD", symbol: "$", name: "Canadian Dollar",    rate: 0.74 },
+  { code: "AUD", symbol: "$", name: "Australian Dollar",  rate: 0.66 },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen",       rate: 0.0067 },
+] as const
+
+const COUNTRIES = [
+  "United States", "United Kingdom", "Canada", "Australia", "Germany",
+  "France", "Netherlands", "Ireland", "Singapore", "Japan", "Other",
+] as const
 
 const CRYPTO_NETWORKS = [
   { id: "btc",      symbol: "BTC",  name: "Bitcoin",       img: "/img/bitcoin.png",  fee: "~0.00012 BTC", feeUsd: "~$8.40",  time: "~20 min", placeholder: "bc1q…",  usdRate: 70000 },
@@ -80,9 +95,21 @@ export function WithdrawalPage() {
   // Bank form state
   const [recipientName, setRecipientName] = useState("")
   const [recipientEmail, setRecipientEmail] = useState("")
+  const [recipientType, setRecipientType] = useState<"individual" | "business">("individual")
+  const [taxId, setTaxId]               = useState("")
   const [rail, setRail]                 = useState<typeof RAILS[number]>("Wire")
+  const [currency, setCurrency]         = useState<typeof CURRENCIES[number]["code"]>("USD")
   const [bankAmount, setBankAmount]     = useState("")
   const [bankMemo, setBankMemo]         = useState("")
+
+  // Recipient bank details
+  const [accountHolder, setAccountHolder] = useState("")
+  const [bankName, setBankName]           = useState("")
+  const [country, setCountry]             = useState<typeof COUNTRIES[number]>("United States")
+  const [accountNumber, setAccountNumber] = useState("")
+  const [routingNumber, setRoutingNumber] = useState("")
+  const [swift, setSwift]                 = useState("")
+  const [iban, setIban]                   = useState("")
 
   // Crypto form state
   const [cryptoNet, setCryptoNet] = useState("btc")
@@ -102,26 +129,67 @@ export function WithdrawalPage() {
 
   const availableUsd = parseFloat(balance?.currentBalance ?? "0")
   const activeCrypto = CRYPTO_NETWORKS.find(n => n.id === cryptoNet) ?? CRYPTO_NETWORKS[0]
+  const activeCurrency = CURRENCIES.find(c => c.code === currency) ?? CURRENCIES[0]
 
-  const bankUsdAmount = parseFloat(bankAmount) || 0
+  const isDomesticRail = DOMESTIC_RAILS.has(rail)
+  const needsIban = rail === "Wire" && country !== "United States"
+
+  const bankFaceAmount = parseFloat(bankAmount) || 0
+  const bankUsdAmount = bankFaceAmount * activeCurrency.rate
   const cryptoUsdAmount = (parseFloat(cryptoAmt) || 0) * activeCrypto.usdRate
+
+  const bankDetailsValid = Boolean(
+    accountHolder.trim() &&
+    bankName.trim() &&
+    accountNumber.trim() &&
+    (isDomesticRail ? routingNumber.trim() : swift.trim()) &&
+    (!needsIban || iban.trim()),
+  )
+  const bankFormValid = Boolean(bankAmount) && bankUsdAmount > 0 && recipientName.trim() && bankDetailsValid
 
   // ── Handlers ──
 
+  function handleRailChange(r: typeof RAILS[number]) {
+    setRail(r)
+    if (DOMESTIC_RAILS.has(r)) {
+      setCurrency("USD")
+      setCountry("United States")
+    }
+  }
+
+  function handleCurrencyChange(code: typeof CURRENCIES[number]["code"]) {
+    setCurrency(code)
+    if (code !== "USD") setRail("Wire")
+  }
+
   async function handleBankSend() {
-    if (!bankAmount || bankUsdAmount <= 0 || !recipientName.trim() || sending) return
+    if (!bankFormValid || sending) return
     setSending(true)
     setFeedback(null)
     try {
+      const bankRef = [
+        bankName.trim(),
+        `Acct ••${accountNumber.trim().slice(-4)}`,
+        isDomesticRail ? `RTN ${routingNumber.trim()}` : `SWIFT ${swift.trim()}`,
+        needsIban ? `IBAN ${iban.trim()}` : null,
+        country,
+      ].filter(Boolean).join(" · ")
       await userRequestWithdrawal({
-        description: recipientName.trim(),
-        category: `Withdrawal · ${rail}`,
+        description: `${recipientName.trim()}${recipientType === "business" ? " (Business)" : ""}`,
+        category: `Withdrawal · ${rail} · ${currency}`,
         amountUsd: bankUsdAmount,
-        accountRef: bankMemo || `Operating · Primary`,
+        accountRef: bankMemo ? `${bankRef} — ${bankMemo}` : bankRef,
       })
-      setFeedback({ type: "success", msg: `$${bankUsdAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} withdrawal to ${recipientName.trim()} submitted for approval.` })
+      setFeedback({ type: "success", msg: `${activeCurrency.symbol}${bankFaceAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${currency} withdrawal to ${recipientName.trim()} submitted for approval.` })
       setBankAmount("")
       setBankMemo("")
+      setAccountHolder("")
+      setBankName("")
+      setAccountNumber("")
+      setRoutingNumber("")
+      setSwift("")
+      setIban("")
+      setTaxId("")
       refetch()
     } catch {
       setFeedback({ type: "error", msg: "Failed to submit withdrawal. Please try again." })
@@ -196,6 +264,21 @@ export function WithdrawalPage() {
             <SectionHeader title="New withdrawal" subtitle="Fill in details and send for admin approval" />
 
             <div className="mt-4 grid grid-cols-2 gap-3">
+              {/* Recipient type */}
+              <div className="col-span-2">
+                <div className="text-[11.5px] text-gray-500 dark:text-gray-400 mb-1">Recipient type</div>
+                <div className="inline-flex rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent p-1">
+                  {(["individual", "business"] as const).map((t) => (
+                    <button key={t} onClick={() => setRecipientType(t)} className={cn(
+                      "px-5 h-8 rounded-md text-[12px] font-medium transition capitalize",
+                      recipientType === t
+                        ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
+                        : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white",
+                    )}>{t}</button>
+                  ))}
+                </div>
+              </div>
+
               {/* Recipient inputs */}
               <div className="col-span-2 space-y-2">
                 <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Recipient</div>
@@ -204,7 +287,7 @@ export function WithdrawalPage() {
                     type="text"
                     value={recipientName}
                     onChange={e => setRecipientName(e.target.value)}
-                    placeholder="Full name or company"
+                    placeholder={recipientType === "business" ? "Company name" : "Full name"}
                     className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
                   />
                   <input
@@ -215,6 +298,15 @@ export function WithdrawalPage() {
                     className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
                   />
                 </div>
+                {recipientType === "business" && (
+                  <input
+                    type="text"
+                    value={taxId}
+                    onChange={e => setTaxId(e.target.value)}
+                    placeholder="Tax ID / EIN (optional)"
+                    className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                  />
+                )}
                 {/* Recent quick-select */}
                 <div className="flex flex-wrap gap-1.5 pt-0.5">
                   {RECENTS.map((r) => (
@@ -236,11 +328,83 @@ export function WithdrawalPage() {
                 </div>
               </div>
 
+              {/* Recipient bank details */}
+              <div className="col-span-2 space-y-2">
+                <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Recipient bank details</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    value={accountHolder}
+                    onChange={e => setAccountHolder(e.target.value)}
+                    placeholder="Account holder name"
+                    className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                  />
+                  <input
+                    type="text"
+                    value={bankName}
+                    onChange={e => setBankName(e.target.value)}
+                    placeholder="Bank name"
+                    className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                  />
+                  <select
+                    value={country}
+                    onChange={e => setCountry(e.target.value as typeof COUNTRIES[number])}
+                    disabled={isDomesticRail}
+                    className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] outline-none focus:border-gray-400 dark:focus:border-white/30 transition disabled:opacity-60"
+                  >
+                    {COUNTRIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <input
+                    type="text"
+                    value={accountNumber}
+                    onChange={e => setAccountNumber(e.target.value)}
+                    placeholder="Account number"
+                    className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] font-mono placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                  />
+                  {isDomesticRail ? (
+                    <input
+                      type="text"
+                      value={routingNumber}
+                      onChange={e => setRoutingNumber(e.target.value)}
+                      placeholder="Routing number"
+                      className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] font-mono placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                    />
+                  ) : (
+                    <input
+                      type="text"
+                      value={swift}
+                      onChange={e => setSwift(e.target.value)}
+                      placeholder="SWIFT / BIC"
+                      className="rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] font-mono placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                    />
+                  )}
+                  {needsIban && (
+                    <input
+                      type="text"
+                      value={iban}
+                      onChange={e => setIban(e.target.value)}
+                      placeholder="IBAN"
+                      className="col-span-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] font-mono placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
+                    />
+                  )}
+                </div>
+              </div>
+
               {/* Amount input */}
               <div>
-                <div className="text-[11.5px] text-gray-500 dark:text-gray-400 mb-1">Amount (USD)</div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-[11.5px] text-gray-500 dark:text-gray-400">Amount</div>
+                  <select
+                    value={currency}
+                    onChange={e => handleCurrencyChange(e.target.value as typeof CURRENCIES[number]["code"])}
+                    disabled={isDomesticRail}
+                    className="text-[11px] font-medium text-gray-500 dark:text-gray-400 bg-transparent outline-none disabled:opacity-60"
+                  >
+                    {CURRENCIES.map((c) => <option key={c.code} value={c.code}>{c.code}</option>)}
+                  </select>
+                </div>
                 <div className="flex items-center rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
-                  <span className="px-3 text-[12.5px] text-gray-400 border-r border-gray-200 dark:border-white/10 h-10 flex items-center shrink-0">$</span>
+                  <span className="px-3 text-[12.5px] text-gray-400 border-r border-gray-200 dark:border-white/10 h-10 flex items-center shrink-0">{activeCurrency.symbol}</span>
                   <input
                     type="number"
                     min="0"
@@ -250,6 +414,9 @@ export function WithdrawalPage() {
                     className="flex-1 px-3 h-10 text-[13px] font-mono bg-white dark:bg-transparent outline-none"
                   />
                 </div>
+                {isDomesticRail && (
+                  <div className="mt-1 text-[10.5px] text-gray-400 dark:text-gray-500">ACH / RTP are USD domestic rails only</div>
+                )}
               </div>
 
               {/* From account */}
@@ -266,7 +433,7 @@ export function WithdrawalPage() {
                 <div className="text-[11.5px] text-gray-500 dark:text-gray-400 mb-1">Rail</div>
                 <div className="inline-flex rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent p-1 w-full">
                   {RAILS.map((r) => (
-                    <button key={r} onClick={() => setRail(r)} className={cn(
+                    <button key={r} onClick={() => handleRailChange(r)} className={cn(
                       "flex-1 h-8 rounded-md text-[12px] font-medium transition",
                       rail === r
                         ? "bg-gray-900 text-white dark:bg-white dark:text-gray-900"
@@ -302,8 +469,11 @@ export function WithdrawalPage() {
               <div>
                 <div className="text-gray-500 dark:text-gray-400">Recipient gets</div>
                 <div className="font-semibold tabular-nums text-[14px]">
-                  {bankAmount ? `$${bankUsdAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "—"}
+                  {bankAmount ? `${activeCurrency.symbol}${bankFaceAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} ${currency}` : "—"}
                 </div>
+                {bankAmount && currency !== "USD" && (
+                  <div className="text-[10.5px] text-gray-400 dark:text-gray-500">≈ ${bankUsdAmount.toLocaleString("en-US", { minimumFractionDigits: 2 })} USD</div>
+                )}
               </div>
               <div>
                 <div className="text-gray-500 dark:text-gray-400">Your balance</div>
@@ -327,7 +497,7 @@ export function WithdrawalPage() {
               <div className="flex items-center gap-2">
                 <Button
                   size="sm"
-                  disabled={!bankAmount || bankUsdAmount <= 0 || !recipientName.trim() || sending}
+                  disabled={!bankFormValid || sending}
                   onClick={handleBankSend}
                   className="gap-1.5"
                 >
