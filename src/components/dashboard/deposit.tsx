@@ -313,7 +313,7 @@ function PendingDepositRow({
 // ─── Main component ───────────────────────────────────────────────
 
 export function DepositPage() {
-  const [transferType, setTransferType] = useState<"bank" | "crypto">("bank");
+  const [transferType, setTransferType] = useState<"bank" | "crypto">("crypto");
   const [cryptoNet, setCryptoNet] = useState("btc");
   const [copied, setCopied] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState("");
