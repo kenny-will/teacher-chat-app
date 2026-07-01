@@ -19,6 +19,8 @@ import {
   MoreHorizontalIcon,
   AlertCircleIcon,
   RefreshCwIcon,
+  BuildingIcon,
+  ZapIcon,
 } from "lucide-react";
 import { DonutChart, Sparkline } from "@/components/meridian/charts";
 import {
@@ -37,6 +39,7 @@ import {
 } from "@/components/meridian/bank-cards";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/auth-context";
+import { useDashboardNav } from "@/contexts/dashboard-nav";
 import { useServerData } from "@/hooks/use-server-data";
 import {
   queryCards,
@@ -83,6 +86,7 @@ const STATUS_LABEL = {
 
 export function CardsPage() {
   const user = useAuth();
+  const { setView } = useDashboardNav();
   const [activeIdx, setActiveIdx] = useState(0);
   const [activateOpen, setActivateOpen] = useState(false);
 
@@ -503,13 +507,41 @@ export function CardsPage() {
                           No activation fee — this card activates for free.
                         </div>
                       ) : !hasFunds ? (
-                        <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-3.5">
-                          <AlertCircleIcon className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
-                          <div className="text-[12px]">
-                            <div className="font-semibold text-rose-700 dark:text-rose-400">Insufficient balance</div>
-                            <div className="text-rose-600 dark:text-rose-500 mt-0.5">
-                              Top up at least ${(activationFee - balance).toFixed(2)} to activate this card.
+                        <div className="rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-3.5 space-y-3">
+                          <div className="flex items-start gap-2.5">
+                            <AlertCircleIcon className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+                            <div className="text-[12px]">
+                              <div className="font-semibold text-rose-700 dark:text-rose-400">Insufficient balance</div>
+                              <div className="text-rose-600 dark:text-rose-500 mt-0.5">
+                                Top up at least ${(activationFee - balance).toFixed(2)} to activate this card.
+                              </div>
                             </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {/* <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5 text-[12px]"
+                              onClick={() => {
+                                setActivateOpen(false);
+                                setView("deposit");
+                              }}
+                            >
+                              <BuildingIcon className="h-3.5 w-3.5" />
+                              Bank transfer
+                            </Button> */}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="gap-1.5 text-[12px]"
+                              onClick={() => {
+                                setActivateOpen(false);
+                                setView("deposit");
+                              }}
+                            >
+                              <ZapIcon className="h-3.5 w-3.5" />
+                              Top up instantly
+                            </Button>
                           </div>
                         </div>
                       ) : (
