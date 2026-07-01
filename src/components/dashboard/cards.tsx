@@ -43,6 +43,7 @@ import {
   queryCardTransactions,
   queryCardsSpendCategories,
   queryCardProgramStats,
+  queryBalanceOverview,
 } from "@/modules/financial/application/queries/financial.queries";
 import type React from "react";
 import { toast } from "sonner";
@@ -95,6 +96,7 @@ export function CardsPage() {
   const { data: stats, isLoading: statsLoading } = useServerData(
     queryCardProgramStats,
   );
+  const { data: balanceOverview } = useServerData(queryBalanceOverview);
 
   const cards = dbCards ?? [];
   const safeIdx = Math.min(activeIdx, Math.max(0, cards.length - 1));
@@ -462,36 +464,80 @@ export function CardsPage() {
                   ))}
                 </div>
 
-                {/* Fee banner */}
-                {activationFee > 0 ? (
-                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3.5">
-                    <AlertCircleIcon className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-                    <div className="text-[12px]">
-                      <div className="font-semibold text-amber-700 dark:text-amber-400">
-                        One-time activation fee
-                      </div>
-                      <div className="text-amber-600 dark:text-amber-500 mt-0.5">
-                        ${activationFee.toFixed(2)} will be charged to your
-                        account balance upon activation.
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 p-3.5 text-[12px] font-medium text-green-700 dark:text-green-400">
-                    No activation fee — this card activates for free.
-                  </div>
-                )}
+                {/* Balance + fee summary */}
+                {(() => {
+                  const balance = parseFloat(balanceOverview?.currentBalance ?? "0");
+                  const hasFunds = balance >= activationFee;
 
-                {/* CTA */}
-                <Button
-                  className="w-full mt-auto"
-                  onClick={() => {
-                    toast.success("Activation request submitted successfully.");
-                    setActivateOpen(false);
-                  }}
-                >
-                  Confirm &amp; Activate
-                </Button>
+                  return (
+                    <>
+                      {/* Balance row */}
+                      <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4 text-[12.5px]">
+                        <div className="flex items-center justify-between">
+                          <span className="text-gray-500 dark:text-gray-400">Available balance</span>
+                          <span className="font-semibold tabular-nums">
+                            ${balance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                          </span>
+                        </div>
+                        {activationFee > 0 && (
+                          <>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-white/5">
+                              <span className="text-gray-500 dark:text-gray-400">Activation fee</span>
+                              <span className="font-semibold tabular-nums text-amber-600 dark:text-amber-400">
+                                −${activationFee.toFixed(2)}
+                              </span>
+                            </div>
+                            <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100 dark:border-white/5">
+                              <span className="text-gray-500 dark:text-gray-400">Balance after activation</span>
+                              <span className={`font-semibold tabular-nums ${hasFunds ? "" : "text-rose-500"}`}>
+                                ${Math.max(0, balance - activationFee).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Status banner */}
+                      {activationFee === 0 ? (
+                        <div className="rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 p-3.5 text-[12px] font-medium text-green-700 dark:text-green-400">
+                          No activation fee — this card activates for free.
+                        </div>
+                      ) : !hasFunds ? (
+                        <div className="flex items-start gap-2.5 rounded-xl border border-rose-200 dark:border-rose-500/30 bg-rose-50 dark:bg-rose-500/10 p-3.5">
+                          <AlertCircleIcon className="h-4 w-4 text-rose-500 shrink-0 mt-0.5" />
+                          <div className="text-[12px]">
+                            <div className="font-semibold text-rose-700 dark:text-rose-400">Insufficient balance</div>
+                            <div className="text-rose-600 dark:text-rose-500 mt-0.5">
+                              Top up at least ${(activationFee - balance).toFixed(2)} to activate this card.
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3.5">
+                          <AlertCircleIcon className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                          <div className="text-[12px]">
+                            <div className="font-semibold text-amber-700 dark:text-amber-400">One-time activation fee</div>
+                            <div className="text-amber-600 dark:text-amber-500 mt-0.5">
+                              ${activationFee.toFixed(2)} will be deducted from your balance upon activation.
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* CTA */}
+                      <Button
+                        className="w-full mt-auto"
+                        disabled={activationFee > 0 && !hasFunds}
+                        onClick={() => {
+                          setActivateOpen(false);
+                          toast.success("Activation request submitted successfully.");
+                        }}
+                      >
+                        Confirm &amp; Activate
+                      </Button>
+                    </>
+                  );
+                })()}
               </div>
             </div>
           )}
