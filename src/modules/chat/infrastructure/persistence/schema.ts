@@ -23,8 +23,8 @@ export const chatAttachmentsTable = pgTable(
   },
   (table) => [
     index('chat_attachments_chat_user_idx').on(table.chatUserId),
-    foreignKey({ columns: [table.chatUserId], foreignColumns: [usersTable.id] }),
-    foreignKey({ columns: [table.uploaderId], foreignColumns: [usersTable.id] }),
+    foreignKey({ columns: [table.chatUserId], foreignColumns: [usersTable.id] }).onDelete('cascade'),
+    foreignKey({ columns: [table.uploaderId], foreignColumns: [usersTable.id] }).onDelete('cascade'),
   ],
 )
 

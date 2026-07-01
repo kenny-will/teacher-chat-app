@@ -128,24 +128,7 @@ export function CardsPage() {
     );
   }
 
-  if (!cards.length) {
-    return (
-      <>
-        <PageHeader
-          eyebrow="Cards"
-          title="Card program."
-          subtitle="No cards yet — ask your admin to issue one."
-        />
-        <div className="rounded-2xl border border-dashed border-gray-200 dark:border-white/10 p-14 text-center text-gray-400">
-          <div className="text-[14px] font-medium">No cards issued</div>
-          <div className="text-[12px] mt-1">
-            Your administrator can issue physical or virtual cards from the
-            admin panel.
-          </div>
-        </div>
-      </>
-    );
-  }
+
 
   const CardComp = resolveComponent(card.network);
   const spentNum = parseFloat(card.spentAmount);
@@ -422,7 +405,7 @@ export function CardsPage() {
 
       {/* ── Activate card dialog ── */}
       <Dialog open={activateOpen} onOpenChange={setActivateOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl h-[90svh] overflow-y-scroll">
           <DialogHeader>
             <DialogTitle>Activate Your Card</DialogTitle>
             <DialogDescription>

@@ -28,7 +28,7 @@ export const documentsTable = pgTable(
     index('documents_owner_idx').on(table.ownerId),
     index('documents_status_idx').on(table.status),
     index('documents_type_idx').on(table.type),
-    foreignKey({ columns: [table.ownerId], foreignColumns: [usersTable.id] }),
+    foreignKey({ columns: [table.ownerId], foreignColumns: [usersTable.id] }).onDelete('cascade'),
   ],
 )
 

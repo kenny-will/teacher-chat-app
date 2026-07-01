@@ -41,7 +41,7 @@ export const projectsTable = pgTable(
   (table) => [
     index('projects_status_idx').on(table.status),
     index('projects_created_by_idx').on(table.createdById),
-    foreignKey({ columns: [table.createdById], foreignColumns: [usersTable.id] }),
+    foreignKey({ columns: [table.createdById], foreignColumns: [usersTable.id] }).onDelete('cascade'),
   ],
 )
 
@@ -58,7 +58,7 @@ export const projectMembersTable = pgTable(
     index('project_members_project_idx').on(table.projectId),
     index('project_members_user_idx').on(table.userId),
     foreignKey({ columns: [table.projectId], foreignColumns: [projectsTable.id] }),
-    foreignKey({ columns: [table.userId], foreignColumns: [usersTable.id] }),
+    foreignKey({ columns: [table.userId], foreignColumns: [usersTable.id] }).onDelete('cascade'),
   ],
 )
 

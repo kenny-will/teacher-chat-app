@@ -44,7 +44,7 @@ export const notificationsTable = pgTable(
     index('notifications_user_idx').on(table.userId),
     index('notifications_is_read_idx').on(table.isRead),
     index('notifications_created_idx').on(table.createdAt),
-    foreignKey({ columns: [table.userId], foreignColumns: [usersTable.id] }),
+    foreignKey({ columns: [table.userId], foreignColumns: [usersTable.id] }).onDelete('cascade'),
   ],
 )
 
