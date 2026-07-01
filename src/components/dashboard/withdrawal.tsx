@@ -31,15 +31,6 @@ import { toast } from "sonner";
 
 // ─── Static UI data ──────────────────────────────────────────────
 
-const RECENTS = [
-  { name: "Atlas Components", email: "atlas@components.io", type: "Wire" },
-  { name: "Marcus Lee", email: "marcus@northwind.co", type: "ACH" },
-  { name: "Acme Corp.", email: "accounts@acmecorp.com", type: "Wire" },
-  { name: "Lumen Labs", email: "ar@lumenlabs.eu", type: "Wire" },
-  { name: "Stripe Inc.", email: "—", type: "ACH" },
-  { name: "Pinpoint LLC", email: "billing@pinpoint.co", type: "ACH" },
-] as const;
-
 const RAILS = ["ACH", "Wire", "RTP"] as const;
 const DOMESTIC_RAILS = new Set<(typeof RAILS)[number]>(["ACH", "RTP"]);
 
@@ -477,28 +468,6 @@ export function WithdrawalPage() {
                     className="w-full rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-transparent px-3 h-10 text-[13px] placeholder:text-gray-400 dark:placeholder:text-gray-600 outline-none focus:border-gray-400 dark:focus:border-white/30 transition"
                   />
                 )}
-                {/* Recent quick-select */}
-                <div className="flex flex-wrap gap-1.5 pt-0.5">
-                  {RECENTS.map((r) => (
-                    <button
-                      key={r.email}
-                      type="button"
-                      onClick={() => {
-                        setRecipientName(r.name);
-                        setRecipientEmail(r.email);
-                      }}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11.5px] font-medium transition",
-                        recipientName === r.name && recipientEmail === r.email
-                          ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300"
-                          : "border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-white/5",
-                      )}
-                    >
-                      <AvatarBadge name={r.name} size={16} />
-                      {r.name}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               {/* Recipient bank details */}

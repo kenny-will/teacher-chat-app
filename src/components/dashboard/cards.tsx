@@ -3,6 +3,13 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import {
   PlusIcon,
   Settings2Icon,
   ChevronLeftIcon,
@@ -76,6 +83,7 @@ const STATUS_LABEL = {
 export function CardsPage() {
   const user = useAuth();
   const [activeIdx, setActiveIdx] = useState(0);
+  const [activateOpen, setActivateOpen] = useState(false);
 
   const { data: dbCards, isLoading: cardsLoading } = useServerData(queryCards);
   const { data: cardTxns, isLoading: txnsLoading } = useServerData(
@@ -150,9 +158,7 @@ export function CardsPage() {
             <Button
               size="sm"
               className="gap-1.5"
-              onClick={() => {
-                toast.success("Top-up your account to activate your card.");
-              }}
+              onClick={() => setActivateOpen(true)}
             >
               <PlusIcon className="h-3.5 w-3.5" /> Activate new card
             </Button>
@@ -407,6 +413,90 @@ export function CardsPage() {
           )}
         </div>
       </div>
+
+      {/* ── Activate card dialog ── */}
+      <Dialog open={activateOpen} onOpenChange={setActivateOpen}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Activate Your Card</DialogTitle>
+            <DialogDescription>
+              Review your card details and confirm activation below.
+            </DialogDescription>
+          </DialogHeader>
+
+          {card && (
+            <div className="flex flex-col sm:flex-row gap-5">
+              {/* Card visual */}
+              <div className="w-full sm:w-64 shrink-0 pointer-events-none">
+                <CardComp
+                  number={card.number}
+                  validThru={card.validThru}
+                  cardholder={user.name.toUpperCase()}
+                  variant={card.cardVariant}
+                />
+              </div>
+
+              {/* Right column: details + fee + CTA */}
+              <div className="flex-1 flex flex-col gap-3">
+                {/* Card details */}
+                <div className="rounded-xl border border-gray-200 dark:border-white/10 p-4 space-y-2.5 text-[12.5px]">
+                  {[
+                    { label: "Network", value: card.network },
+                    {
+                      label: "Type",
+                      value: card.cardType === "virtual" ? "Virtual" : "Physical",
+                    },
+                    { label: "Card label", value: card.label },
+                    { label: "Ends in", value: `•••• ${card.lastFour}` },
+                    { label: "Expires", value: card.validThru },
+                  ].map((row) => (
+                    <div
+                      key={row.label}
+                      className="flex items-center justify-between"
+                    >
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {row.label}
+                      </span>
+                      <span className="font-medium">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Fee banner */}
+                {activationFee > 0 ? (
+                  <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 p-3.5">
+                    <AlertCircleIcon className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <div className="text-[12px]">
+                      <div className="font-semibold text-amber-700 dark:text-amber-400">
+                        One-time activation fee
+                      </div>
+                      <div className="text-amber-600 dark:text-amber-500 mt-0.5">
+                        ${activationFee.toFixed(2)} will be charged to your
+                        account balance upon activation.
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-xl border border-green-200 dark:border-green-500/30 bg-green-50 dark:bg-green-500/10 p-3.5 text-[12px] font-medium text-green-700 dark:text-green-400">
+                    No activation fee — this card activates for free.
+                  </div>
+                )}
+
+                {/* CTA */}
+                <Button
+                  className="w-full mt-auto"
+                  onClick={() => {
+                    toast.success("Activation request submitted successfully.");
+                    setActivateOpen(false);
+                  }}
+                >
+                  Confirm &amp; Activate
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

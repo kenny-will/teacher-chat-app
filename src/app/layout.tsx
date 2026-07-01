@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Script from "next/script";
 import { SITE_TITLE, SITE_DESCRIPTION } from "@/lib/site";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -65,6 +66,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             {children}
+            <Toaster richColors={true} />
           </ThemeProvider>
         </TooltipProvider>
       </body>
